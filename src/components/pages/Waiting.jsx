@@ -1,7 +1,7 @@
 import StudentList from "../pages/StudentList";
 import { getInterviewRequiredStudents} from "../../server/Api";
 
-function Waiting_interview() {
+function WaitingInterview() {
   return (
     <StudentList
       title="Waiting for Interview"
@@ -10,4 +10,4 @@ function Waiting_interview() {
   );
 }
 
-export default Waiting_interview;
+export default WaitingInterview;
