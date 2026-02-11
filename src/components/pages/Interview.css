@@ -1,0 +1,71 @@
+.interview-container {
+  max-width: 600px;
+  margin: 50px auto;
+  padding: 35px;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  font-family: Arial, sans-serif;
+}
+
+.interview-title {
+  text-align: center;
+  margin-bottom: 25px;
+  color: #020eaf;
+  font-weight: 700;
+}
+
+.form-group {
+  margin-bottom: 18px;
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.form-group input,
+.form-group select {
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  transition: 0.3s;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  border-color: #020eaf;
+  outline: none;
+  box-shadow: 0 0 5px rgba(2,14,175,0.2);
+}
+
+.submit-btn {
+  width: 100%;
+  padding: 13px;
+  background-color: #020eaf;
+  color: #fff;
+  font-weight: 700;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.submit-btn:hover {
+  background-color: #0418d6;
+}
+
+/* 📱 MOBILE RESPONSIVE */
+@media (max-width: 768px) {
+  .interview-container {
+    margin: 20px 15px;
+    padding: 25px;
+  }
+
+  .interview-title {
+    font-size: 20px;
+  }
+} 
