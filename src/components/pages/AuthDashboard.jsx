@@ -23,8 +23,8 @@ const AuthDashboard = () => {
   const isResetMode = searchParams.get("mode") === "reset";
   const resetToken = searchParams.get("token") || "";
 
-  const [isLogin, setIsLogin] = useState(true);
   const [forgotMode, setForgotMode] = useState(false);
+  const [forgotSubmitting, setForgotSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -38,12 +38,8 @@ const AuthDashboard = () => {
   const currentRole = (localStorage.getItem("role") || "").toUpperCase();
   const isHeadUser = isAuthenticated && currentRole === "HEAD";
   const createMode = searchParams.get("mode") === "create" && isHeadUser;
-  const showRegister = createMode || !isLogin;
+  const showRegister = createMode;
   const requireCourse = showRegister && formData.role === "TEACHER";
-
-  useEffect(() => {
-    if (createMode) setIsLogin(false);
-  }, [createMode]);
 
   useEffect(() => {
     if (isResetMode) return;
@@ -93,12 +89,15 @@ const AuthDashboard = () => {
 
   const handleForgotPassword = async (e) => {
     e.preventDefault();
+    if (forgotSubmitting) return;
+
     if (!formData.email) {
       toast.error("Please enter your email.");
       return;
     }
 
     try {
+      setForgotSubmitting(true);
       const response = await fetch(`${API_BASE}/api/auth/forgot-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -115,6 +114,8 @@ const AuthDashboard = () => {
       setForgotMode(false);
     } catch {
       toast.error("Unable to connect to server. Please try again.");
+    } finally {
+      setForgotSubmitting(false);
     }
   };
 
@@ -255,7 +256,16 @@ const AuthDashboard = () => {
                 onChange={handleChange}
               />
             </div>
-            <button type="submit" style={styles.submitBtn}>Send Reset Link</button>
+            <button
+              type="submit"
+              style={{
+                ...styles.submitBtn,
+                ...(forgotSubmitting ? styles.submitBtnDisabled : {}),
+              }}
+              disabled={forgotSubmitting}
+            >
+              {forgotSubmitting ? "Sending..." : "Send Reset Link"}
+            </button>
           </form>
           <div style={styles.toggleSection}>
             <button type="button" onClick={() => setForgotMode(false)} style={styles.toggleBtn}>
@@ -360,16 +370,6 @@ const AuthDashboard = () => {
           </div>
         )}
 
-        {!createMode && (
-          <div style={styles.toggleSection}>
-            <span style={styles.toggleText}>
-              {isLogin ? "Need an account?" : "Already have an account?"}
-            </span>
-            <button type="button" onClick={() => setIsLogin(!isLogin)} style={styles.toggleBtn}>
-              {isLogin ? "Sign Up" : "Sign In"}
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );
@@ -455,6 +455,10 @@ const styles = {
     letterSpacing: "0.5px",
     boxShadow: "0 4px 15px rgba(102, 126, 234, 0.4)",
     marginTop: "0.5rem",
+  },
+  submitBtnDisabled: {
+    opacity: 0.75,
+    cursor: "not-allowed",
   },
   toggleSection: {
     marginTop: "1.25rem",

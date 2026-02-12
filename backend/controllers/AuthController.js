@@ -154,12 +154,8 @@ const forgotPassword = async (req, res) => {
 
     const user = await User.findOne({ email });
 
-    // Do not reveal whether email exists.
     if (!user) {
-      return res.json({
-        success: true,
-        message: "If this email is registered, password reset instructions were sent.",
-      });
+      return res.status(404).json({ error: "Email is not registered." });
     }
 
     const token = jwt.sign(
@@ -172,6 +168,7 @@ const forgotPassword = async (req, res) => {
 
     try {
       await transporter.sendMail({
+        from: process.env.EMAIL_USER || process.env.GMAIL_USER,
         to: user.email,
         subject: "Reset your password - TTI Dashboard",
         html: `
@@ -182,13 +179,13 @@ const forgotPassword = async (req, res) => {
         `,
       });
     } catch (mailErr) {
-      // Keep response generic so forgot-password UI does not break on SMTP outages.
       console.error("Forgot password mail error:", mailErr.message);
+      return res.status(500).json({ error: "Unable to send reset email. Please try again." });
     }
 
     return res.json({
       success: true,
-      message: "If this email is registered, password reset instructions were sent.",
+      message: "Password reset link sent to your email.",
     });
   } catch (err) {
     return res.status(500).json({ error: err.message });
