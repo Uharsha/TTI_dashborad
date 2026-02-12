@@ -180,7 +180,10 @@ const forgotPassword = async (req, res) => {
       });
     } catch (mailErr) {
       console.error("Forgot password mail error:", mailErr.message);
-      return res.status(500).json({ error: "Unable to send reset email. Please try again." });
+      return res.status(500).json({
+        error: "Unable to send reset email. Please check mail configuration.",
+        detail: mailErr.message,
+      });
     }
 
     return res.json({
