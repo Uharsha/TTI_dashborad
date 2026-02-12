@@ -10,6 +10,7 @@ function Navbar() {
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
   const notificationRef = useRef(null);
   const role = localStorage.getItem("role");
   const navigate = useNavigate();
@@ -55,6 +56,11 @@ function Navbar() {
       clearInterval(timer);
     };
   }, [isLogin]);
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("theme", theme);
+  }, [theme]);
 
   useEffect(() => {
     const closePanel = (event) => {
@@ -116,6 +122,9 @@ function Navbar() {
           { to: "/head-dashboard/rejected-head", label: "Head Rejected" },
           { to: "/head-dashboard/rejected-teacher", label: "Teacher Rejected" },
           { to: "/head-dashboard/teacher-accepted", label: "Final Confirmed" },
+          { to: "/head-dashboard/interview-calendar", label: "Interview Calendar" },
+          { to: "/head-dashboard/notifications", label: "Notifications" },
+          { to: "/head-dashboard/audit-logs", label: "Audit Logs" },
           { to: "/auth?mode=create", label: "Create Account" },
         ]
       : role === "TEACHER"
@@ -124,6 +133,9 @@ function Navbar() {
             { to: "/teacher-dashboard/interview", label: "Waiting for Interview" },
             { to: "/teacher-dashboard/rejected-teacher", label: "Teacher Rejected" },
             { to: "/teacher-dashboard/teacher-accepted", label: "Final Confirmed" },
+            { to: "/teacher-dashboard/interview-calendar", label: "Interview Calendar" },
+            { to: "/teacher-dashboard/notifications", label: "Notifications" },
+            { to: "/teacher-dashboard/audit-logs", label: "Audit Logs" },
           ]
         : [];
 
@@ -179,6 +191,9 @@ function Navbar() {
                 <span style={styles.userChip}>
                   {userName ? `Hi, ${userName}` : `Hi, ${role || "User"}`}
                 </span>
+                <button onClick={() => setTheme((prev) => (prev === "light" ? "dark" : "light"))}>
+                  {theme === "light" ? "Dark" : "Light"}
+                </button>
                 <button onClick={handleLogout}>Logout</button>
               </div>
             </>

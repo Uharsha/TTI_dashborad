@@ -1,3 +1,26 @@
+:root {
+  --bg-page: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  --text-main: #2c3e50;
+  --text-muted: #5b6b83;
+  --surface-card: #ffffff;
+  --surface-muted: #eef2ff;
+  --border-color: #d7dff5;
+}
+
+[data-theme="dark"] {
+  --bg-page: linear-gradient(135deg, #0f172a 0%, #111827 100%);
+  --text-main: #e5e7eb;
+  --text-muted: #a5b4cc;
+  --surface-card: #1f2937;
+  --surface-muted: #243145;
+  --border-color: #324156;
+}
+
+@keyframes pulse {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -11,9 +34,9 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: var(--bg-page);
   min-height: 100vh;
-  color: #2c3e50;
+  color: var(--text-main);
   overflow-x: hidden;
 }
 

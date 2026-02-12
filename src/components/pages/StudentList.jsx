@@ -1,5 +1,7 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import StudentTable from "../StudentTable";
+import { getNotifications, headApproveStudent, headDeleteStudent, headRejectStudent } from "../../server/Api";
+import { useToast } from "../ui/ToastContext";
 
 const ALL_COURSES = [
   "DBMS",
@@ -14,6 +16,10 @@ export default function StudentList({ title, fetchFn }) {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [selectedCourse, setSelectedCourse] = useState("ALL");
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [recentActivity, setRecentActivity] = useState([]);
+  const [bulkLoading, setBulkLoading] = useState(false);
+  const toast = useToast();
 
   const refresh = useCallback(() => {
     setLoading(true);
@@ -26,6 +32,12 @@ export default function StudentList({ title, fetchFn }) {
   useEffect(() => {
     refresh();
   }, [refresh]);
+
+  useEffect(() => {
+    getNotifications()
+      .then((res) => setRecentActivity((res?.data?.notifications || []).slice(0, 5)))
+      .catch(() => setRecentActivity([]));
+  }, [students]);
 
   const visibleStudents = useMemo(() => {
     if (!Array.isArray(students)) return [];
@@ -80,7 +92,52 @@ export default function StudentList({ title, fetchFn }) {
   const totalCount = courseFilteredStudents.length;
   const shownCount = filteredStudents.length;
 
-  if (loading) return <div style={styles.loadingContainer}><p style={styles.loadingText}>⏳ Loading...</p></div>;
+  const toggleSelected = (id) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
+  const selectAllVisible = () => {
+    setSelectedIds(filteredStudents.map((s) => s._id));
+  };
+
+  const clearSelected = () => setSelectedIds([]);
+
+  const runBulk = async (type) => {
+    if (!selectedIds.length || bulkLoading) return;
+    setBulkLoading(true);
+    const apiFn =
+      type === "approve"
+        ? headApproveStudent
+        : type === "reject"
+          ? headRejectStudent
+          : (id) => headDeleteStudent(id, "Bulk action");
+    try {
+      const results = await Promise.allSettled(selectedIds.map((id) => apiFn(id)));
+      const ok = results.filter((r) => r.status === "fulfilled").length;
+      const fail = results.length - ok;
+      toast.success(`Bulk ${type}: ${ok} success${fail ? `, ${fail} failed` : ""}.`);
+      clearSelected();
+      refresh();
+    } catch {
+      toast.error("Bulk action failed.");
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div style={styles.loadingContainer}>
+        <div style={styles.skeletonGrid}>
+          {[...Array(6)].map((_, i) => (
+            <div key={i} style={styles.skeletonCard} />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={styles.pageContainer}>
@@ -90,6 +147,16 @@ export default function StudentList({ title, fetchFn }) {
           {search.trim() ? `${shownCount} / ${totalCount}` : totalCount}
         </span>
       </div>
+      {isHead && (
+        <div style={styles.bulkRow}>
+          <button style={styles.bulkBtn} onClick={selectAllVisible}>Select Visible</button>
+          <button style={styles.bulkBtn} onClick={clearSelected}>Clear</button>
+          <button style={styles.bulkBtn} disabled={bulkLoading || !selectedIds.length} onClick={() => runBulk("approve")}>Bulk Approve</button>
+          <button style={styles.bulkBtn} disabled={bulkLoading || !selectedIds.length} onClick={() => runBulk("reject")}>Bulk Reject</button>
+          <button style={styles.bulkDangerBtn} disabled={bulkLoading || !selectedIds.length} onClick={() => runBulk("delete")}>Bulk Delete</button>
+          <span style={styles.bulkCount}>{selectedIds.length} selected</span>
+        </div>
+      )}
       <div style={styles.filtersRow}>
         <input
           type="text"
@@ -115,7 +182,28 @@ export default function StudentList({ title, fetchFn }) {
           </select>
         )}
       </div>
-      <StudentTable students={filteredStudents} refresh={refresh} />
+      <div style={styles.activityCard}>
+        <h4 style={styles.activityTitle}>Recent Activity</h4>
+        {recentActivity.length === 0 ? (
+          <p style={styles.activityEmpty}>No recent updates.</p>
+        ) : (
+          <ul style={styles.activityList}>
+            {recentActivity.map((a) => (
+              <li key={a._id} style={styles.activityItem}>
+                <strong>{a.title}</strong>
+                <span>{a.message}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+      <StudentTable
+        students={filteredStudents}
+        refresh={refresh}
+        enableSelection={isHead}
+        selectedIds={selectedIds}
+        onToggleSelected={toggleSelected}
+      />
     </div>
   );
 }
@@ -157,10 +245,8 @@ const styles = {
     border: "1px solid #dbe4ff",
   },
   loadingContainer: {
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    minHeight: "400px",
+    minHeight: "320px",
+    padding: "1.5rem",
   },
   loadingText: {
     textAlign: "center",
@@ -201,5 +287,80 @@ const styles = {
     fontSize: "0.95rem",
     outline: "none",
     backgroundColor: "#fff",
+  },
+  skeletonGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
+    gap: "12px",
+  },
+  skeletonCard: {
+    height: "170px",
+    borderRadius: "12px",
+    background: "linear-gradient(90deg, #e6eaf5 25%, #f4f7ff 37%, #e6eaf5 63%)",
+    backgroundSize: "400% 100%",
+    animation: "pulse 1.2s ease infinite",
+  },
+  bulkRow: {
+    display: "flex",
+    gap: "8px",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    marginBottom: "12px",
+  },
+  bulkBtn: {
+    border: "1px solid #d0d7ee",
+    background: "#fff",
+    color: "#24324d",
+    borderRadius: "8px",
+    padding: "8px 10px",
+    cursor: "pointer",
+    fontWeight: 700,
+    fontSize: "12px",
+  },
+  bulkDangerBtn: {
+    border: "1px solid #ef9a9a",
+    background: "#ffebee",
+    color: "#b71c1c",
+    borderRadius: "8px",
+    padding: "8px 10px",
+    cursor: "pointer",
+    fontWeight: 700,
+    fontSize: "12px",
+  },
+  bulkCount: {
+    alignSelf: "center",
+    fontWeight: 700,
+    color: "#3949ab",
+  },
+  activityCard: {
+    maxWidth: "900px",
+    margin: "0 auto 12px auto",
+    border: "1px solid var(--border-color)",
+    background: "var(--surface-card)",
+    borderRadius: "10px",
+    padding: "10px",
+  },
+  activityTitle: {
+    margin: "0 0 8px",
+    color: "var(--text-main)",
+  },
+  activityEmpty: {
+    color: "var(--text-muted)",
+    margin: 0,
+  },
+  activityList: {
+    listStyle: "none",
+    padding: 0,
+    margin: 0,
+    display: "grid",
+    gap: "6px",
+  },
+  activityItem: {
+    border: "1px solid var(--border-color)",
+    borderRadius: "8px",
+    padding: "8px",
+    display: "grid",
+    gap: "3px",
+    color: "var(--text-main)",
   },
 };

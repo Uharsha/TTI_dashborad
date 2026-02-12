@@ -5,6 +5,9 @@ import WaitingInterview from "./Waiting";
 import Interview from "./Interview";
 import TeacherAccepted from "./TeacherAccepted";
 import RejectedTeacher from "./RejectedTeacher";
+import NotificationsPage from "./NotificationsPage";
+import InterviewCalendar from "./InterviewCalendar";
+import AuditLogs from "./AuditLogs";
 function Teacher() {
     return (  
         <div>
@@ -15,6 +18,9 @@ function Teacher() {
              <Route path="interview/details/:id" element={<Interview />} />
              <Route path="teacher-accepted" element={<TeacherAccepted />} />
              <Route path="rejected-teacher" element={<RejectedTeacher />} />
+             <Route path="notifications" element={<NotificationsPage />} />
+             <Route path="interview-calendar" element={<InterviewCalendar />} />
+             <Route path="audit-logs" element={<AuditLogs />} />
             </Routes>
         </div>
     );

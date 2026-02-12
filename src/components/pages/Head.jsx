@@ -4,6 +4,9 @@ import RejectedTeacher from './RejectedTeacher';
 import HeadAccepted from './HeadAccepted';
 import RejectedHead from './RejectedHead';
 import Pending from './Pending';
+import NotificationsPage from './NotificationsPage';
+import InterviewCalendar from './InterviewCalendar';
+import AuditLogs from './AuditLogs';
 import { Routes, Route, Navigate } from 'react-router-dom';
 function Head() {
     return ( 
@@ -16,6 +19,9 @@ function Head() {
               <Route path="head-rejected" element={<RejectedHead />} />
               <Route path="teacher-accepted" element={<TeacherAccepted />} />
               <Route path="rejected-teacher" element={<RejectedTeacher />} />
+              <Route path="notifications" element={<NotificationsPage />} />
+              <Route path="interview-calendar" element={<InterviewCalendar />} />
+              <Route path="audit-logs" element={<AuditLogs />} />
             </Routes>
         </div>
      );

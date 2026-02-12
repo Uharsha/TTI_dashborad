@@ -10,7 +10,7 @@ import {
   teacherRejectStudent,
 } from "../server/Api";
 
-function StudentTable({ students, refresh }) {
+function StudentTable({ students, refresh, enableSelection = false, selectedIds = [], onToggleSelected = () => {} }) {
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [actionKey, setActionKey] = useState("");
@@ -97,6 +97,14 @@ function StudentTable({ students, refresh }) {
             borderLeft: `6px solid ${getStatusColor(s.status)}`,
           }}
         >
+          {enableSelection && (
+            <input
+              type="checkbox"
+              checked={selectedIds.includes(s._id)}
+              onChange={() => onToggleSelected(s._id)}
+              style={{ position: "absolute", left: 10, top: 10 }}
+            />
+          )}
           {s.passport_photo ? (
             <a href={s.passport_photo} target="_blank" rel="noreferrer" title="Open passport photo">
               <img src={s.passport_photo} alt={`${s.name} passport`} style={styles.cardImage} />
@@ -163,6 +171,29 @@ function StudentTable({ students, refresh }) {
                 <p style={styles.rulesText}>
                   TTI Rules: <strong>Candidate has accepted the rules and regulations</strong>
                 </p>
+              </div>
+            </div>
+
+            <div style={styles.timelineWrap}>
+              <h4 style={styles.timelineTitle}>Candidate Timeline</h4>
+              <div style={styles.timeline}>
+                {[
+                  "SUBMITTED",
+                  "HEAD_ACCEPTED",
+                  "INTERVIEW_SCHEDULED",
+                  "SELECTED",
+                ].map((step) => {
+                  const current = selectedStudent.status;
+                  const order = ["SUBMITTED", "HEAD_ACCEPTED", "INTERVIEW_SCHEDULED", "SELECTED", "REJECTED", "HEAD_REJECTED"];
+                  const active = order.indexOf(current) >= order.indexOf(step) && !["REJECTED", "HEAD_REJECTED"].includes(current);
+                  const rejected = ["REJECTED", "HEAD_REJECTED"].includes(current) && step === "SELECTED";
+                  return (
+                    <div key={step} style={styles.timelineItem}>
+                      <span style={{ ...styles.timelineDot, ...(active ? styles.timelineDotActive : {}), ...(rejected ? styles.timelineDotRejected : {}) }} />
+                      <span style={styles.timelineLabel}>{step.replaceAll("_", " ")}</span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
@@ -274,6 +305,7 @@ const styles = {
     borderRadius: "12px",
     padding: "15px",
     width: "100%",
+    position: "relative",
     boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
     textAlign: "center",
     transition: "all 0.3s ease",
@@ -377,6 +409,43 @@ const styles = {
     textAlign: "center",
     color: "#666",
     fontStyle: "italic",
+  },
+  timelineWrap: {
+    marginTop: "14px",
+    border: "1px solid #e5e9f3",
+    borderRadius: "10px",
+    padding: "10px",
+    background: "#fafcff",
+  },
+  timelineTitle: {
+    margin: "0 0 8px 0",
+    color: "#33415c",
+  },
+  timeline: {
+    display: "grid",
+    gap: "6px",
+  },
+  timelineItem: {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+  },
+  timelineDot: {
+    width: "10px",
+    height: "10px",
+    borderRadius: "999px",
+    background: "#cbd5e1",
+  },
+  timelineDotActive: {
+    background: "#2563eb",
+  },
+  timelineDotRejected: {
+    background: "#dc2626",
+  },
+  timelineLabel: {
+    fontSize: "12px",
+    color: "#475569",
+    fontWeight: 600,
   },
 };
 
