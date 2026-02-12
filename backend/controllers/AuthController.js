@@ -9,12 +9,7 @@ const FRONTEND_URL = normalizeUrl(
     process.env.DASHBOARD_URL ||
     "https://tti-dashborad-99d7.vercel.app"
 );
-const SENDER_EMAIL =
-  process.env.RESEND_FROM ||
-  process.env.EMAIL_USER ||
-  process.env.GMAIL_USER ||
-  process.env.MAIL_USER ||
-  process.env.SMTP_USER;
+const SENDER_EMAIL = process.env.RESEND_FROM;
 
 const getRequesterFromToken = (req) => {
   const authHeader = req.headers.authorization || "";
@@ -247,3 +242,4 @@ const resetPassword = async (req, res) => {
 };
 
 module.exports = { login, register, forgotPassword, resetPassword };
+
