@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import StudentTable from "../StudentTable";
-import { getNotifications, headApproveStudent, headDeleteStudent, headRejectStudent } from "../../server/Api";
+import { getNotifications, headApproveStudent, headDeleteStudent, headRejectStudent, markAllNotificationsRead } from "../../server/Api";
 import { useToast } from "../ui/ToastContext";
 
 const ALL_COURSES = [
@@ -35,9 +35,23 @@ export default function StudentList({ title, fetchFn }) {
 
   useEffect(() => {
     getNotifications()
-      .then((res) => setRecentActivity((res?.data?.notifications || []).slice(0, 5)))
+      .then((res) =>
+        setRecentActivity(
+          (res?.data?.notifications || []).filter((n) => !n.isRead).slice(0, 5)
+        )
+      )
       .catch(() => setRecentActivity([]));
   }, [students]);
+
+  const markRecentSeen = async () => {
+    try {
+      await markAllNotificationsRead();
+      setRecentActivity([]);
+      toast.success("Recent activity marked as seen.");
+    } catch {
+      toast.error("Unable to mark as seen.");
+    }
+  };
 
   const visibleStudents = useMemo(() => {
     if (!Array.isArray(students)) return [];
@@ -183,7 +197,12 @@ export default function StudentList({ title, fetchFn }) {
         )}
       </div>
       <div style={styles.activityCard}>
-        <h4 style={styles.activityTitle}>Recent Activity</h4>
+        <div style={styles.activityHeader}>
+          <h4 style={styles.activityTitle}>Recent Activity</h4>
+          {recentActivity.length > 0 && (
+            <button style={styles.activityActionBtn} onClick={markRecentSeen}>Mark as Seen</button>
+          )}
+        </div>
         {recentActivity.length === 0 ? (
           <p style={styles.activityEmpty}>No recent updates.</p>
         ) : (
@@ -341,8 +360,25 @@ const styles = {
     padding: "10px",
   },
   activityTitle: {
-    margin: "0 0 8px",
+    margin: 0,
     color: "var(--text-main)",
+  },
+  activityHeader: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: "8px",
+    gap: "8px",
+  },
+  activityActionBtn: {
+    border: "1px solid #d0d7ee",
+    background: "#fff",
+    color: "#334155",
+    borderRadius: "8px",
+    padding: "6px 10px",
+    cursor: "pointer",
+    fontWeight: 700,
+    fontSize: "12px",
   },
   activityEmpty: {
     color: "var(--text-muted)",
