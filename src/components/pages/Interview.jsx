@@ -16,6 +16,7 @@ function Interview() {
     platform: "",
     link: "",
   });
+  const [submitting, setSubmitting] = useState(false);
 
   const handleChange = (e) => {
     setInterview({
@@ -25,12 +26,15 @@ function Interview() {
   };
 
   const handleApprove = async () => {
+    if (submitting) return;
+
     if (!interview.date || !interview.time || !interview.platform || !interview.link) {
       toast.error("Please fill all interview details.");
       return;
     }
 
     try {
+      setSubmitting(true);
       await scheduleInterview(id, interview);
       toast.success("Interview scheduled and mail sent to candidate.");
       navigate("/teacher-dashboard/interview");
@@ -38,6 +42,8 @@ function Interview() {
       console.error(err);
       const backendMsg = err?.response?.data?.error || err?.response?.data?.message;
       toast.error(backendMsg || "Something went wrong while scheduling interview.");
+    } finally {
+      setSubmitting(false);
     }
 
 
@@ -92,8 +98,8 @@ function Interview() {
       />
     </div>
 
-    <button className="submit-btn" onClick={handleApprove}>
-      Approve & Send Mail
+    <button className="submit-btn" onClick={handleApprove} disabled={submitting}>
+      {submitting ? "Sending..." : "Approve & Send Mail"}
     </button>
   </div>
   );

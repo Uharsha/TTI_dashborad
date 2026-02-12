@@ -57,6 +57,11 @@
 .submit-btn:hover {
   background-color: #0418d6;
 }
+.submit-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  background-color: #4c62da;
+}
 
 /* 📱 MOBILE RESPONSIVE */
 @media (max-width: 768px) {

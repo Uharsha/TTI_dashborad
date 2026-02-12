@@ -11,6 +11,8 @@ import {
 
 function StudentTable({ students, refresh }) {
   const [selectedStudent, setSelectedStudent] = useState(null);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [actionKey, setActionKey] = useState("");
   const role = localStorage.getItem("role");
   const toast = useToast();
 
@@ -18,7 +20,11 @@ function StudentTable({ students, refresh }) {
     return <EmptyState />;
   }
 
-  const handleAction = async (actionFn, id) => {
+  const handleAction = async (actionFn, id, key) => {
+    if (actionLoading) return;
+
+    setActionLoading(true);
+    setActionKey(`${id}:${key}`);
     try {
       await actionFn(id);
       setSelectedStudent(null);
@@ -26,6 +32,9 @@ function StudentTable({ students, refresh }) {
       toast.success("Action completed.");
     } catch (err) {
       toast.error(err?.response?.data?.error || "Action failed.");
+    } finally {
+      setActionLoading(false);
+      setActionKey("");
     }
   };
 
@@ -148,16 +157,26 @@ function StudentTable({ students, refresh }) {
               {selectedStudent.status === "SUBMITTED" && (
                 <>
                   <button
-                    onClick={() => handleAction(headApproveStudent, selectedStudent._id)}
-                    style={{ ...styles.actionButton, backgroundColor: "#28a745" }}
+                    onClick={() => handleAction(headApproveStudent, selectedStudent._id, "head-approve")}
+                    disabled={actionLoading}
+                    style={{
+                      ...styles.actionButton,
+                      backgroundColor: "#28a745",
+                      ...(actionLoading ? styles.disabledActionButton : {}),
+                    }}
                   >
-                    Approve Application
+                    {actionKey === `${selectedStudent._id}:head-approve` ? "Processing..." : "Approve Application"}
                   </button>
                   <button
-                    onClick={() => handleAction(headRejectStudent, selectedStudent._id)}
-                    style={{ ...styles.actionButton, backgroundColor: "#dc3545" }}
+                    onClick={() => handleAction(headRejectStudent, selectedStudent._id, "head-reject")}
+                    disabled={actionLoading}
+                    style={{
+                      ...styles.actionButton,
+                      backgroundColor: "#dc3545",
+                      ...(actionLoading ? styles.disabledActionButton : {}),
+                    }}
                   >
-                    Reject Application
+                    {actionKey === `${selectedStudent._id}:head-reject` ? "Processing..." : "Reject Application"}
                   </button>
                 </>
               )}
@@ -172,16 +191,26 @@ function StudentTable({ students, refresh }) {
               {selectedStudent.status === "INTERVIEW_SCHEDULED" && (
                 <>
                   <button
-                    onClick={() => handleAction(teacherApproveStudent, selectedStudent._id)}
-                    style={{ ...styles.actionButton, backgroundColor: "#007bff" }}
+                    onClick={() => handleAction(teacherApproveStudent, selectedStudent._id, "teacher-approve")}
+                    disabled={actionLoading}
+                    style={{
+                      ...styles.actionButton,
+                      backgroundColor: "#007bff",
+                      ...(actionLoading ? styles.disabledActionButton : {}),
+                    }}
                   >
-                    Confirm Selection
+                    {actionKey === `${selectedStudent._id}:teacher-approve` ? "Processing..." : "Confirm Selection"}
                   </button>
                   <button
-                    onClick={() => handleAction(teacherRejectStudent, selectedStudent._id)}
-                    style={{ ...styles.actionButton, backgroundColor: "#dc3545" }}
+                    onClick={() => handleAction(teacherRejectStudent, selectedStudent._id, "teacher-reject")}
+                    disabled={actionLoading}
+                    style={{
+                      ...styles.actionButton,
+                      backgroundColor: "#dc3545",
+                      ...(actionLoading ? styles.disabledActionButton : {}),
+                    }}
                   >
-                    Final Reject
+                    {actionKey === `${selectedStudent._id}:teacher-reject` ? "Processing..." : "Final Reject"}
                   </button>
                 </>
               )}
@@ -300,6 +329,11 @@ const styles = {
     borderRadius: "8px",
     cursor: "pointer",
     fontWeight: "bold",
+    opacity: 1,
+  },
+  disabledActionButton: {
+    opacity: 0.7,
+    cursor: "not-allowed",
   },
   finalMessage: {
     width: "100%",
@@ -310,4 +344,3 @@ const styles = {
 };
 
 export default StudentTable;
-
