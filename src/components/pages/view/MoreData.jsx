@@ -136,7 +136,9 @@ const styles = {
     background: "#2f80ed",
     color: "#fff",
     borderRadius: "8px",
-    padding: "10px 14px",
+    padding: "12px 18px",
+    fontWeight: 700,
+    minWidth: "160px",
     cursor: "pointer",
   },
   dangerBtn: {
@@ -144,7 +146,9 @@ const styles = {
     background: "#d63031",
     color: "#fff",
     borderRadius: "8px",
-    padding: "10px 14px",
+    padding: "12px 18px",
+    fontWeight: 700,
+    minWidth: "160px",
     cursor: "pointer",
   },
 };

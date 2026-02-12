@@ -156,11 +156,13 @@ function Navbar() {
               </button>
 
               <div className="nav-links desktop-links">
-                {roleLinks.map((item) => (
-                  <NavLink key={item.to} to={item.to}>
-                    {item.label}
-                  </NavLink>
-                ))}
+                <div className="desktop-link-scroll">
+                  {roleLinks.map((item) => (
+                    <NavLink key={item.to} to={item.to}>
+                      {item.label}
+                    </NavLink>
+                  ))}
+                </div>
                 <div className="notification-wrap" ref={notificationRef}>
                   <button className="notification-btn" onClick={handleOpenNotifications} aria-label="Notifications">
                     Alerts

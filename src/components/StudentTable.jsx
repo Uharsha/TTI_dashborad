@@ -391,13 +391,14 @@ const styles = {
   },
   actionButton: {
     flex: 1,
-    minWidth: "120px",
+    minWidth: "170px",
     color: "#fff",
     border: "none",
-    padding: "12px",
-    borderRadius: "8px",
+    padding: "14px 16px",
+    borderRadius: "10px",
     cursor: "pointer",
     fontWeight: "bold",
+    fontSize: "14px",
     opacity: 1,
   },
   disabledActionButton: {
