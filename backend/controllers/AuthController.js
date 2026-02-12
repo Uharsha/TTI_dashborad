@@ -1,7 +1,7 @@
 const User = require("../models/User");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
-const transporter = require("../utils/mailer");
+const mailer = require("../utils/mailer");
 
 const normalizeUrl = (value = "") => String(value).trim().replace(/\/+$/, "");
 const FRONTEND_URL = normalizeUrl(
@@ -10,6 +10,7 @@ const FRONTEND_URL = normalizeUrl(
     "https://tti-dashborad-99d7.vercel.app"
 );
 const SENDER_EMAIL =
+  process.env.RESEND_FROM ||
   process.env.EMAIL_USER ||
   process.env.GMAIL_USER ||
   process.env.MAIL_USER ||
@@ -179,12 +180,12 @@ const forgotPassword = async (req, res) => {
     if (!SENDER_EMAIL) {
       return res.status(500).json({
         error: "Email sender is not configured on server.",
-        detail: "Set EMAIL_USER (or GMAIL_USER) in backend environment variables.",
+        detail: "Set RESEND_API_KEY and RESEND_FROM in backend environment variables.",
       });
     }
 
     try {
-      await transporter.sendMail({
+      await mailer.sendMail({
         from: SENDER_EMAIL,
         to: user.email,
         subject: "Reset your password - TTI Dashboard",

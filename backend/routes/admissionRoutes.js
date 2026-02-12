@@ -5,7 +5,7 @@ const { CloudinaryStorage } = require("multer-storage-cloudinary");
 const cloudinary = require("cloudinary").v2;
 
 const Admission = require("../models/Admission");
-const transporter = require("../utils/mailer");
+const mailer = require("../utils/mailer");
 const COURSE_TEACHERS = require("../utils/teacher");
 const auth = require("../models/Middleware/Auth");
 const normalizeUrl = (value = "") => String(value).trim().replace(/\/+$/, "");
@@ -15,6 +15,7 @@ const DASHBOARD_URL = normalizeUrl(
     "https://tti-dashborad-99d7.vercel.app"
 );
 const MAIL_FROM =
+  process.env.RESEND_FROM ||
   process.env.EMAIL_USER ||
   process.env.GMAIL_USER ||
   process.env.MAIL_USER ||
@@ -22,7 +23,7 @@ const MAIL_FROM =
 
 const safeSendMail = async (mailOptions) => {
   try {
-    await transporter.sendMail({
+    await mailer.sendMail({
       from: MAIL_FROM,
       ...mailOptions,
     });
@@ -32,6 +33,33 @@ const safeSendMail = async (mailOptions) => {
     return false;
   }
 };
+
+// Simple admin-only test mail endpoint for verifying Resend config
+router.post("/test-mail", auth, async (req, res) => {
+  try {
+    if (req.user.role !== "HEAD") {
+      return res.status(403).json({ error: "Only HEAD can send test emails" });
+    }
+
+    const { to, subject, html, text } = req.body || {};
+    if (!to) {
+      return res.status(400).json({ error: "Recipient email (to) is required" });
+    }
+
+    await mailer.sendMail({
+      from: MAIL_FROM,
+      to,
+      subject: subject || "Test email - TTI",
+      html: html || "<p>Resend test mail from TTI backend.</p>",
+      text: text || "Resend test mail from TTI backend.",
+    });
+
+    return res.json({ success: true, message: "Test email sent" });
+  } catch (err) {
+    console.error("Test mail error:", err.message);
+    return res.status(500).json({ error: "Test email failed", detail: err.message });
+  }
+});
 
 /* ================== CLOUDINARY CONFIG ================== */
 cloudinary.config({
