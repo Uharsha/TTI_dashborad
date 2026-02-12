@@ -104,7 +104,7 @@ const styles = {
     display: "flex",
     justifyContent: "center",
     alignItems: "flex-start",
-    padding: "56px 16px 24px",
+    padding: "84px 16px 24px",
     background: "#f6f8fc",
   },
   card: {
