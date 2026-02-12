@@ -5,7 +5,9 @@ const { CloudinaryStorage } = require("multer-storage-cloudinary");
 const cloudinary = require("cloudinary").v2;
 
 const Admission = require("../models/Admission");
+const Notification = require("../models/Notification");
 const mailer = require("../utils/mailer");
+const { sendSms } = require("../utils/sms");
 const COURSE_TEACHERS = require("../utils/teacher");
 const auth = require("../models/Middleware/Auth");
 const normalizeUrl = (value = "") => String(value).trim().replace(/\/+$/, "");
@@ -20,6 +22,14 @@ const MAIL_FROM =
   process.env.MAIL_USER ||
   process.env.SMTP_USER;
 const activeOnly = (query = {}) => ({ isDeleted: { $ne: true }, ...query });
+
+const createNotification = async ({ title, message, role = "ALL", course = null, userId = null, meta = {} }) => {
+  try {
+    await Notification.create({ title, message, role, course, userId, meta });
+  } catch (err) {
+    console.error("Notification create failed:", err.message);
+  }
+};
 
 const safeSendMail = async (mailOptions) => {
   try {
@@ -120,6 +130,13 @@ router.post(
       const admission = new Admission(admissionData);
       const user = await admission.save();
 
+      await createNotification({
+        title: "New Admission Submitted",
+        message: `${user.name} applied for ${user.course}.`,
+        role: "HEAD",
+        meta: { admissionId: user._id, type: "ADMISSION_SUBMITTED" },
+      });
+
       /* 📧 MAIL TO STUDENT */
       await safeSendMail({
         to: user.email,
@@ -175,6 +192,15 @@ This is an automatically generated email. Replies to this message are not monito
       });
       }
 
+      // Optional SMS hook (Twilio). Works when TWILIO_* vars are set.
+      const headPhone = String(process.env.HEAD_PHONE || process.env.HEAD_MOBILE || "").trim();
+      if (headPhone) {
+        await sendSms({
+          to: headPhone,
+          body: `TTI: New admission from ${user.name} for ${user.course}.`,
+        }).catch((err) => console.error("SMS send failed:", err.message));
+      }
+
       res.status(201).json({ success: true, message: "Admission submitted successfully!" });
 
     } catch (err) {
@@ -214,6 +240,13 @@ router.put("/head/approve/:id", auth, async (req, res) => {
 
     user.status = "HEAD_ACCEPTED";
     await user.save();
+    await createNotification({
+      title: "Candidate Approved by Head",
+      message: `${user.name} is approved for ${user.course}. Please schedule interview.`,
+      role: "TEACHER",
+      course: user.course,
+      meta: { admissionId: user._id, type: "HEAD_APPROVED" },
+    });
 
     /* 📧 MAIL ONLY TO TEACHER */
     await safeSendMail({
@@ -266,6 +299,12 @@ router.put("/head/reject/:id", auth, async (req, res) => {
     user.finalStatus = "REJECTED";
     user.decisionDone = true;
     await user.save();
+    await createNotification({
+      title: "Candidate Rejected by Head",
+      message: `${user.name} was rejected at head review stage.`,
+      role: "HEAD",
+      meta: { admissionId: user._id, type: "HEAD_REJECTED" },
+    });
 
     await safeSendMail({
       to: user.email,
@@ -325,6 +364,12 @@ router.put("/head/delete/:id", auth, async (req, res) => {
     user.deletedBy = req.user.id || null;
     user.deletionReason = reason.slice(0, 500);
     await user.save();
+    await createNotification({
+      title: "Application Deleted",
+      message: `${user.name}'s application was deleted by HEAD.`,
+      role: "HEAD",
+      meta: { admissionId: user._id, type: "HEAD_DELETED" },
+    });
 
     return res.json({ success: true, message: "Application deleted successfully." });
   } catch (err) {
@@ -355,6 +400,12 @@ router.post("/schedule-interview/:id", auth, async (req, res) => {
       { interview: { date, time, platform, link }, status: "INTERVIEW_SCHEDULED" },
       { new: true }
     );
+    await createNotification({
+      title: "Interview Scheduled",
+      message: `${updatedStudent.name}'s interview is scheduled on ${date} at ${time}.`,
+      role: "HEAD",
+      meta: { admissionId: updatedStudent._id, type: "INTERVIEW_SCHEDULED" },
+    });
 
     // 📧 Mail interview details to student
     await safeSendMail({
@@ -408,6 +459,12 @@ router.put("/final/approve/:id", auth, async (req, res) => {
     user.finalStatus = "SELECTED";
     user.decisionDone = true;
     await user.save();
+    await createNotification({
+      title: "Final Selection Done",
+      message: `${user.name} is selected by teacher for ${user.course}.`,
+      role: "HEAD",
+      meta: { admissionId: user._id, type: "FINAL_SELECTED" },
+    });
 
     // 📧 Congratulations mail
     await safeSendMail({
@@ -458,6 +515,12 @@ router.put("/final/reject/:id", auth, async (req, res) => {
     user.finalStatus = "REJECTED";
     user.decisionDone = true;
     await user.save();
+    await createNotification({
+      title: "Final Rejection Done",
+      message: `${user.name} was finally rejected by teacher for ${user.course}.`,
+      role: "HEAD",
+      meta: { admissionId: user._id, type: "FINAL_REJECTED" },
+    });
 
     // 📧 Apology mail
     await safeSendMail({
@@ -598,6 +661,78 @@ router.get("/interview_required", auth, async (req, res) => {
   }
 
   res.json(await Admission.find(activeOnly(query)));
+});
+
+/* ================== NOTIFICATIONS ================== */
+router.get("/notifications", auth, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const role = String(req.user.role || "").toUpperCase();
+    const course = req.user.course || null;
+
+    const roleFilter =
+      role === "TEACHER"
+        ? [{ role: "TEACHER", $or: [{ course: null }, { course }] }, { role: "ALL" }]
+        : role === "HEAD"
+          ? [{ role: "HEAD" }, { role: "ALL" }]
+          : [{ role: "ALL" }];
+
+    const notifications = await Notification.find({
+      $or: [...roleFilter, { userId }],
+    })
+      .sort({ createdAt: -1 })
+      .limit(50)
+      .lean();
+
+    const withReadState = notifications.map((n) => ({
+      ...n,
+      isRead: Array.isArray(n.readBy)
+        ? n.readBy.some((entry) => String(entry) === String(userId))
+        : false,
+    }));
+
+    const unreadCount = withReadState.filter((n) => !n.isRead).length;
+    return res.json({ success: true, unreadCount, notifications: withReadState });
+  } catch (err) {
+    return res.status(500).json({ error: err.message || "Failed to fetch notifications" });
+  }
+});
+
+router.put("/notifications/:id/read", auth, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const note = await Notification.findByIdAndUpdate(
+      req.params.id,
+      { $addToSet: { readBy: userId } },
+      { new: true }
+    );
+    if (!note) return res.status(404).json({ error: "Notification not found" });
+    return res.json({ success: true });
+  } catch (err) {
+    return res.status(500).json({ error: err.message || "Failed to mark read" });
+  }
+});
+
+router.put("/notifications/read-all", auth, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const role = String(req.user.role || "").toUpperCase();
+    const course = req.user.course || null;
+    const roleFilter =
+      role === "TEACHER"
+        ? [{ role: "TEACHER", $or: [{ course: null }, { course }] }, { role: "ALL" }]
+        : role === "HEAD"
+          ? [{ role: "HEAD" }, { role: "ALL" }]
+          : [{ role: "ALL" }];
+
+    await Notification.updateMany(
+      { $or: [...roleFilter, { userId }] },
+      { $addToSet: { readBy: userId } }
+    );
+    return res.json({ success: true });
+  } catch (err) {
+    return res.status(500).json({ error: err.message || "Failed to mark all as read" });
+  }
 });
 
 module.exports = router;

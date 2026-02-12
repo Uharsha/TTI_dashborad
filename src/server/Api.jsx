@@ -50,6 +50,9 @@ export const getInterviewRequiredStudents = () => API.get("/interview_required")
 
 // Dashboard data (HEAD sees all, TEACHER sees only HEAD_ACCEPTED for their course)
 export const getDashboardData = () => API.get("/get-data");
+export const getNotifications = () => API.get("/notifications");
+export const markNotificationRead = (id) => API.put(`/notifications/${id}/read`);
+export const markAllNotificationsRead = () => API.put("/notifications/read-all");
 
 /* ================= HEAD ACTIONS ================= */
 

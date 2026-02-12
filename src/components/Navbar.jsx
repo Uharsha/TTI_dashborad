@@ -1,11 +1,16 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import "./Navbar.css";
+import { getNotifications, markAllNotificationsRead, markNotificationRead } from "../server/Api";
 
 function Navbar() {
   const [isLogin, setIsLogin] = useState(false);
   const [userName, setUserName] = useState(localStorage.getItem("name") || "");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [notificationOpen, setNotificationOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const notificationRef = useRef(null);
   const role = localStorage.getItem("role");
   const navigate = useNavigate();
 
@@ -26,6 +31,42 @@ function Navbar() {
     };
   }, [mobileMenuOpen]);
 
+  useEffect(() => {
+    if (!isLogin) return undefined;
+    let mounted = true;
+
+    const loadNotifications = async () => {
+      try {
+        const res = await getNotifications();
+        if (!mounted) return;
+        setNotifications(res?.data?.notifications || []);
+        setUnreadCount(res?.data?.unreadCount || 0);
+      } catch {
+        if (!mounted) return;
+        setNotifications([]);
+        setUnreadCount(0);
+      }
+    };
+
+    loadNotifications();
+    const timer = setInterval(loadNotifications, 30000);
+    return () => {
+      mounted = false;
+      clearInterval(timer);
+    };
+  }, [isLogin]);
+
+  useEffect(() => {
+    const closePanel = (event) => {
+      if (!notificationRef.current) return;
+      if (!notificationRef.current.contains(event.target)) {
+        setNotificationOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", closePanel);
+    return () => document.removeEventListener("mousedown", closePanel);
+  }, []);
+
   const handleLogout = () => {
     localStorage.removeItem("isLogin");
     localStorage.removeItem("role");
@@ -40,6 +81,32 @@ function Navbar() {
   };
 
   const closeMobileMenu = () => setMobileMenuOpen(false);
+
+  const handleOpenNotifications = () => {
+    setNotificationOpen((prev) => !prev);
+  };
+
+  const handleRead = async (id) => {
+    try {
+      await markNotificationRead(id);
+      setNotifications((prev) =>
+        prev.map((n) => (n._id === id ? { ...n, isRead: true } : n))
+      );
+      setUnreadCount((prev) => Math.max(0, prev - 1));
+    } catch {
+      // ignore
+    }
+  };
+
+  const handleReadAll = async () => {
+    try {
+      await markAllNotificationsRead();
+      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+      setUnreadCount(0);
+    } catch {
+      // ignore
+    }
+  };
 
   const roleLinks =
     role === "HEAD"
@@ -82,6 +149,33 @@ function Navbar() {
                     {item.label}
                   </NavLink>
                 ))}
+                <div className="notification-wrap" ref={notificationRef}>
+                  <button className="notification-btn" onClick={handleOpenNotifications} aria-label="Notifications">
+                    Alerts
+                    {unreadCount > 0 && <span className="notification-count">{unreadCount > 99 ? "99+" : unreadCount}</span>}
+                  </button>
+                  {notificationOpen && (
+                    <div className="notification-panel">
+                      <div className="notification-head">
+                        <strong>Notifications</strong>
+                        <button onClick={handleReadAll} className="notification-readall">Mark all</button>
+                      </div>
+                      <div className="notification-list">
+                        {notifications.length === 0 && <p className="notification-empty">No notifications</p>}
+                        {notifications.map((note) => (
+                          <button
+                            key={note._id}
+                            className={`notification-item ${note.isRead ? "read" : "unread"}`}
+                            onClick={() => handleRead(note._id)}
+                          >
+                            <span className="notification-title">{note.title}</span>
+                            <span className="notification-msg">{note.message}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
                 <span style={styles.userChip}>
                   {userName ? `Hi, ${userName}` : `Hi, ${role || "User"}`}
                 </span>
@@ -138,4 +232,3 @@ const styles = {
 };
 
 export default Navbar;
-
