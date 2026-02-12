@@ -1,7 +1,7 @@
 const COURSE_TEACHERS = {
   DBMS: {
     name: "Ananya Rao",
-    email: "ananya.dbms.teacher@example.com",
+    email: "uppalapatiharshavardhan1234@gmail.com",
   },
   CloudComputing: {
     name: "Rohan Mehta",
