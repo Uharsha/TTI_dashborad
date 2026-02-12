@@ -106,7 +106,10 @@ const AuthDashboard = () => {
 
       const result = await response.json();
       if (!response.ok) {
-        toast.error(result.error || "Unable to process request.");
+        const message = result?.detail
+          ? `${result.error} (${result.detail})`
+          : (result.error || "Unable to process request.");
+        toast.error(message);
         return;
       }
 
