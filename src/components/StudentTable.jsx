@@ -135,6 +135,7 @@ function StudentTable({ students, refresh }) {
                 <p><strong>Education:</strong> {selectedStudent.education}</p>
                 <p><strong>Computer:</strong> {selectedStudent.basicComputerKnowledge}</p>
                 <p><strong>English:</strong> {selectedStudent.basicEnglishSkills}</p>
+                <p><strong>NVDA:</strong> {selectedStudent.ScreenReader || "N/A"}</p>
                 <p><strong>Enrolled:</strong> {selectedStudent.enrolledCourse}</p>
                 <p style={styles.rulesText}>
                   TTI Rules: <strong>Candidate has accepted the rules and regulations</strong>

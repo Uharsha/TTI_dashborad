@@ -72,6 +72,7 @@ function MoreData() {
         <p><b>Name:</b> {student.name}</p>
         <p><b>Email:</b> {student.email}</p>
         <p><b>Status:</b> {student.status}</p>
+        <p><b>NVDA Knowledge:</b> {student.ScreenReader || "N/A"}</p>
       </div>
 
       {role === "HEAD" && page === "PENDING" && (
@@ -94,4 +95,3 @@ function MoreData() {
 }
 
 export default MoreData;
-
