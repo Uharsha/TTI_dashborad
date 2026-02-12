@@ -163,29 +163,36 @@ export default function StudentList({ title, fetchFn }) {
       </div>
       {isHead && (
         <div style={styles.bulkRow}>
-          <button style={styles.bulkBtn} onClick={selectAllVisible}>Select Visible</button>
-          <button style={styles.bulkBtn} onClick={clearSelected}>Clear</button>
-          <button style={styles.bulkBtn} disabled={bulkLoading || !selectedIds.length} onClick={() => runBulk("approve")}>Bulk Approve</button>
-          <button style={styles.bulkBtn} disabled={bulkLoading || !selectedIds.length} onClick={() => runBulk("reject")}>Bulk Reject</button>
-          <button style={styles.bulkDangerBtn} disabled={bulkLoading || !selectedIds.length} onClick={() => runBulk("delete")}>Bulk Delete</button>
+          <button type="button" style={styles.bulkBtn} onClick={selectAllVisible}>Select Visible</button>
+          <button type="button" style={styles.bulkBtn} onClick={clearSelected}>Clear</button>
+          <button type="button" style={styles.bulkBtn} disabled={bulkLoading || !selectedIds.length} onClick={() => runBulk("approve")}>Bulk Approve</button>
+          <button type="button" style={styles.bulkBtn} disabled={bulkLoading || !selectedIds.length} onClick={() => runBulk("reject")}>Bulk Reject</button>
+          <button type="button" style={styles.bulkDangerBtn} disabled={bulkLoading || !selectedIds.length} onClick={() => runBulk("delete")}>Bulk Delete</button>
           <span style={styles.bulkCount}>{selectedIds.length} selected</span>
         </div>
       )}
       <div style={styles.filtersRow}>
+        <label htmlFor="student-search" style={styles.srOnly}>Search students</label>
         <input
+          id="student-search"
           type="text"
           placeholder="Search by name, email, mobile, course, status"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
+          aria-label="Search students by name, email, mobile, course or status"
           style={{
             ...styles.searchInput,
             ...(isHead ? styles.searchInputHead : styles.searchInputTeacher),
           }}
         />
         {isHead && (
+          <>
+            <label htmlFor="course-filter" style={styles.srOnly}>Filter by course</label>
           <select
+            id="course-filter"
             value={selectedCourse}
             onChange={(e) => setSelectedCourse(e.target.value)}
+            aria-label="Filter students by course"
             style={styles.courseSelect}
           >
             {courseOptions.map((course) => (
@@ -194,13 +201,14 @@ export default function StudentList({ title, fetchFn }) {
               </option>
             ))}
           </select>
+          </>
         )}
       </div>
       <div style={styles.activityCard}>
         <div style={styles.activityHeader}>
           <h4 style={styles.activityTitle}>Recent Activity</h4>
           {recentActivity.length > 0 && (
-            <button style={styles.activityActionBtn} onClick={markRecentSeen}>Mark as Seen</button>
+            <button type="button" style={styles.activityActionBtn} onClick={markRecentSeen}>Mark as Seen</button>
           )}
         </div>
         {recentActivity.length === 0 ? (
@@ -398,5 +406,15 @@ const styles = {
     display: "grid",
     gap: "3px",
     color: "var(--text-main)",
+  },
+  srOnly: {
+    border: 0,
+    clip: "rect(0 0 0 0)",
+    height: "1px",
+    margin: "-1px",
+    overflow: "hidden",
+    padding: 0,
+    position: "absolute",
+    width: "1px",
   },
 };

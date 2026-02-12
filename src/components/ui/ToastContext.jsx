@@ -10,7 +10,11 @@ function ToastItem({ toast, onClose }) {
   };
 
   return (
-    <div style={{ ...styles.toast, backgroundColor: bgByType[toast.type] || "#343a40" }}>
+    <div
+      style={{ ...styles.toast, backgroundColor: bgByType[toast.type] || "#343a40" }}
+      role={toast.type === "error" ? "alert" : "status"}
+      aria-live={toast.type === "error" ? "assertive" : "polite"}
+    >
       <span style={styles.message}>{toast.message}</span>
       <button onClick={() => onClose(toast.id)} style={styles.closeBtn} aria-label="Close notification">
         x
@@ -99,4 +103,3 @@ const styles = {
     lineHeight: 1,
   },
 };
-

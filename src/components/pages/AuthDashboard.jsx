@@ -213,25 +213,31 @@ const AuthDashboard = () => {
           <p style={styles.subtitle}>Set a new password for your account.</p>
           <form onSubmit={handleResetPassword} style={styles.form}>
             <div style={styles.formGroup}>
-              <label style={styles.label}>New Password</label>
+              <label htmlFor="reset-password" style={styles.label}>New Password</label>
               <input
+                id="reset-password"
                 style={styles.input}
                 name="password"
                 type="password"
                 placeholder="Enter new password"
                 value={formData.password}
                 onChange={handleChange}
+                autoComplete="new-password"
+                required
               />
             </div>
             <div style={styles.formGroup}>
-              <label style={styles.label}>Confirm Password</label>
+              <label htmlFor="reset-confirm-password" style={styles.label}>Confirm Password</label>
               <input
+                id="reset-confirm-password"
                 style={styles.input}
                 name="confirmPassword"
                 type="password"
                 placeholder="Confirm new password"
                 value={formData.confirmPassword}
                 onChange={handleChange}
+                autoComplete="new-password"
+                required
               />
             </div>
             <button type="submit" style={styles.submitBtn}>Update Password</button>
@@ -249,14 +255,17 @@ const AuthDashboard = () => {
           <p style={styles.subtitle}>Enter your account email to get reset link.</p>
           <form onSubmit={handleForgotPassword} style={styles.form}>
             <div style={styles.formGroup}>
-              <label style={styles.label}>Email Address</label>
+              <label htmlFor="forgot-email" style={styles.label}>Email Address</label>
               <input
+                id="forgot-email"
                 style={styles.input}
                 name="email"
                 type="email"
                 placeholder="you@example.com"
                 value={formData.email}
                 onChange={handleChange}
+                autoComplete="email"
+                required
               />
             </div>
             <button
@@ -293,45 +302,54 @@ const AuthDashboard = () => {
         <form onSubmit={handleSubmit} style={styles.form}>
           {showRegister && (
             <div style={styles.formGroup}>
-              <label style={styles.label}>Full Name</label>
+              <label htmlFor="register-name" style={styles.label}>Full Name</label>
               <input
+                id="register-name"
                 style={styles.input}
                 name="name"
                 placeholder="Enter full name"
                 value={formData.name}
                 onChange={handleChange}
+                autoComplete="name"
               />
             </div>
           )}
 
           <div style={styles.formGroup}>
-            <label style={styles.label}>Email Address</label>
+            <label htmlFor="auth-email" style={styles.label}>Email Address</label>
             <input
+              id="auth-email"
               style={styles.input}
               name="email"
               type="email"
               placeholder="you@example.com"
               value={formData.email}
               onChange={handleChange}
+              autoComplete="email"
+              required
             />
           </div>
 
           <div style={styles.formGroup}>
-            <label style={styles.label}>Password</label>
+            <label htmlFor="auth-password" style={styles.label}>Password</label>
             <input
+              id="auth-password"
               style={styles.input}
               name="password"
               type="password"
               placeholder="Enter password"
               value={formData.password}
               onChange={handleChange}
+              autoComplete={showRegister ? "new-password" : "current-password"}
+              required
             />
           </div>
 
           {showRegister && (
             <div style={styles.formGroup}>
-              <label style={styles.label}>Role</label>
+              <label htmlFor="register-role" style={styles.label}>Role</label>
               <select
+                id="register-role"
                 style={{ ...styles.input, cursor: "pointer" }}
                 name="role"
                 value={formData.role}
@@ -345,12 +363,14 @@ const AuthDashboard = () => {
 
           {requireCourse && (
             <div style={styles.formGroup}>
-              <label style={styles.label}>Select Course</label>
+              <label htmlFor="register-course" style={styles.label}>Select Course</label>
               <select
+                id="register-course"
                 style={{ ...styles.input, cursor: "pointer" }}
                 name="course"
                 value={formData.course}
                 onChange={handleChange}
+                required
               >
                 <option value="">-- Choose a course --</option>
                 {courseOptions.map((c) => (

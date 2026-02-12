@@ -73,6 +73,17 @@ function Navbar() {
     return () => document.removeEventListener("mousedown", closePanel);
   }, []);
 
+  useEffect(() => {
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setNotificationOpen(false);
+        setMobileMenuOpen(false);
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, []);
+
   const handleLogout = () => {
     localStorage.removeItem("isLogin");
     localStorage.removeItem("role");
@@ -142,17 +153,20 @@ function Navbar() {
   return (
     <>
       <div className="app-navbar">
-        <div className="navbar-container">
+        <div className="navbar-container" role="navigation" aria-label="Primary">
           <h2 className="navbar-title">Admission Dashboard</h2>
 
           {isLogin && (
             <>
               <button
+                type="button"
                 className="hamburger-btn"
                 onClick={() => setMobileMenuOpen(true)}
                 aria-label="Open menu"
+                aria-expanded={mobileMenuOpen}
+                aria-controls="mobile-menu-drawer"
               >
-                ☰
+                Menu
               </button>
 
               <div className="nav-links desktop-links">
@@ -164,15 +178,22 @@ function Navbar() {
                   ))}
                 </div>
                 <div className="notification-wrap" ref={notificationRef}>
-                  <button className="notification-btn" onClick={handleOpenNotifications} aria-label="Notifications">
+                  <button
+                    type="button"
+                    className="notification-btn"
+                    onClick={handleOpenNotifications}
+                    aria-label="Notifications"
+                    aria-expanded={notificationOpen}
+                    aria-controls="notification-panel"
+                  >
                     Alerts
                     {unreadCount > 0 && <span className="notification-count">{unreadCount > 99 ? "99+" : unreadCount}</span>}
                   </button>
                   {notificationOpen && (
-                    <div className="notification-panel">
+                    <div className="notification-panel" id="notification-panel" role="dialog" aria-label="Notification panel">
                       <div className="notification-head">
                         <strong>Notifications</strong>
-                        <button onClick={handleReadAll} className="notification-readall">Mark all</button>
+                        <button type="button" onClick={handleReadAll} className="notification-readall">Mark all</button>
                       </div>
                       <div className="notification-list">
                         {notifications.length === 0 && <p className="notification-empty">No notifications</p>}
@@ -181,6 +202,7 @@ function Navbar() {
                             key={note._id}
                             className={`notification-item ${note.isRead ? "read" : "unread"}`}
                             onClick={() => handleRead(note._id)}
+                            type="button"
                           >
                             <span className="notification-title">{note.title}</span>
                             <span className="notification-msg">{note.message}</span>
@@ -193,10 +215,14 @@ function Navbar() {
                 <span style={styles.userChip}>
                   {userName ? `Hi, ${userName}` : `Hi, ${role || "User"}`}
                 </span>
-                <button onClick={() => setTheme((prev) => (prev === "light" ? "dark" : "light"))}>
+                <button
+                  type="button"
+                  onClick={() => setTheme((prev) => (prev === "light" ? "dark" : "light"))}
+                  aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
+                >
                   {theme === "light" ? "Dark" : "Light"}
                 </button>
-                <button onClick={handleLogout}>Logout</button>
+                <button type="button" onClick={handleLogout}>Logout</button>
               </div>
             </>
           )}
@@ -210,10 +236,10 @@ function Navbar() {
             onClick={closeMobileMenu}
           />
 
-          <aside className={`mobile-drawer ${mobileMenuOpen ? "open" : ""}`}>
+          <aside className={`mobile-drawer ${mobileMenuOpen ? "open" : ""}`} id="mobile-menu-drawer" aria-label="Mobile menu">
             <div className="drawer-header">
               <strong>{userName ? `Hi, ${userName}` : role}</strong>
-              <button onClick={closeMobileMenu} className="drawer-close" aria-label="Close menu">
+              <button type="button" onClick={closeMobileMenu} className="drawer-close" aria-label="Close menu">
                 x
               </button>
             </div>
@@ -224,7 +250,7 @@ function Navbar() {
                   {item.label}
                 </NavLink>
               ))}
-              <button onClick={handleLogout} className="drawer-logout">
+              <button type="button" onClick={handleLogout} className="drawer-logout">
                 Logout
               </button>
             </div>
@@ -249,3 +275,4 @@ const styles = {
 };
 
 export default Navbar;
+

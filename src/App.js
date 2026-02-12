@@ -88,36 +88,41 @@ function RejectedTeacherRedirect() {
 function App() {
   return (
     <BrowserRouter>
+      <a href="#main-content" className="skip-link">
+        Skip to main content
+      </a>
       <Navbar />
-      <Routes>
-        <Route path="/" element={<AuthDashboard />} />
-        <Route path="/auth" element={<AuthDashboard />} />
-        <Route
-          path="/head-dashboard/*"
-          element={
-            <RoleRoute allowedRoles={["HEAD"]}>
-              <Head />
-            </RoleRoute>
-          }
-        />
-        <Route
-          path="/teacher-dashboard/*"
-          element={
-            <RoleRoute allowedRoles={["TEACHER"]}>
-              <Teacher />
-            </RoleRoute>
-          }
-        />
-        <Route path="/pending" element={<Navigate to="/head-dashboard/pending" replace />} />
-        <Route path="/head-accepted" element={<HeadAcceptedRedirect />} />
-        <Route path="/rejected-head" element={<Navigate to="/head-dashboard/rejected-head" replace />} />
-        <Route path="/head-rejected" element={<Navigate to="/head-dashboard/head-rejected" replace />} />
-        <Route path="/interview" element={<Navigate to="/teacher-dashboard/interview" replace />} />
-        <Route path="/teacher-accepted" element={<TeacherAcceptedRedirect />} />
-        <Route path="/rejected-teacher" element={<RejectedTeacherRedirect />} />
-        <Route path="/interview/details/:id" element={<Navigate to="/teacher-dashboard/interview" replace />} />
-        <Route path="*" element={<Navigate to="/" />} />
-      </Routes>
+      <main id="main-content" tabIndex="-1">
+        <Routes>
+          <Route path="/" element={<AuthDashboard />} />
+          <Route path="/auth" element={<AuthDashboard />} />
+          <Route
+            path="/head-dashboard/*"
+            element={
+              <RoleRoute allowedRoles={["HEAD"]}>
+                <Head />
+              </RoleRoute>
+            }
+          />
+          <Route
+            path="/teacher-dashboard/*"
+            element={
+              <RoleRoute allowedRoles={["TEACHER"]}>
+                <Teacher />
+              </RoleRoute>
+            }
+          />
+          <Route path="/pending" element={<Navigate to="/head-dashboard/pending" replace />} />
+          <Route path="/head-accepted" element={<HeadAcceptedRedirect />} />
+          <Route path="/rejected-head" element={<Navigate to="/head-dashboard/rejected-head" replace />} />
+          <Route path="/head-rejected" element={<Navigate to="/head-dashboard/head-rejected" replace />} />
+          <Route path="/interview" element={<Navigate to="/teacher-dashboard/interview" replace />} />
+          <Route path="/teacher-accepted" element={<TeacherAcceptedRedirect />} />
+          <Route path="/rejected-teacher" element={<RejectedTeacherRedirect />} />
+          <Route path="/interview/details/:id" element={<Navigate to="/teacher-dashboard/interview" replace />} />
+          <Route path="*" element={<Navigate to="/" />} />
+        </Routes>
+      </main>
     </BrowserRouter>
   );
 }
