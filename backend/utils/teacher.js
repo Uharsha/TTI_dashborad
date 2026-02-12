@@ -1,23 +1,29 @@
 const COURSE_TEACHERS = {
   DBMS: {
-    name: "Ananya Rao",
-    email: "uppalapatiharshavardhan1234@gmail.com",
+    name: "Shilpa Raut",
+    email: "rautshilpa.tti@gmail.com",
   },
   CloudComputing: {
-    name: "Rohan Mehta",
-    email: "rohan.cloud.teacher@example.com",
+    name: "Vinod Borate",
+    email: "borate.tti@gmail.com",
   },
   Accessibility: {
-    name: "Sneha Verma",
-    email: "sneha.access.teacher@example.com",
+    name: "Rajshree Ladkat",
+    email: "rajshree.tti@gmail.com",
   },
-  BasicComputers: {
-    name: "Vikram Das",
-    email: "vikram.basic.teacher@example.com",
-  },
+  BasicComputers: [
+    {
+      name: "Supriya Jagdale",
+      email: "supriya31jagdale@gmail.com",
+    },
+    {
+      name: "Suvarna Khatate",
+      email: "suvarnakhatate.tti@gmail.com",
+    },
+  ],
   MachineLearning: {
-    name: "Ishita Nair",
-    email: "ishita.ml.teacher@example.com",
+    name: "Batul Chinikamwala",
+    email: "batul.tti@gmail.com",
   },
 };
 

@@ -148,9 +148,18 @@ router.put("/head/approve/:id", auth, async (req, res) => {
     const user = await Admission.findById(req.params.id);
     if (!user) return res.status(404).json({ message: "Invalid request" });
 
-    const teacher = COURSE_TEACHERS[user.course];
-    if (!teacher) {
+    const teacherEntry = COURSE_TEACHERS[user.course];
+    if (!teacherEntry) {
       return res.status(400).json({ error: `No teacher found for course: ${user.course}` });
+    }
+    const teachers = Array.isArray(teacherEntry) ? teacherEntry : [teacherEntry];
+    const teacherEmails = teachers.map((t) => t.email).filter(Boolean);
+    const teacherNames = teachers
+      .map((t) => t.name)
+      .filter(Boolean)
+      .join(" and ");
+    if (!teacherEmails.length) {
+      return res.status(400).json({ error: `No teacher email configured for course: ${user.course}` });
     }
 
     user.status = "HEAD_ACCEPTED";
@@ -158,10 +167,10 @@ router.put("/head/approve/:id", auth, async (req, res) => {
 
     /* 📧 MAIL ONLY TO TEACHER */
     await safeSendMail({
-      to: teacher.email,
+      to: teacherEmails.join(", "),
       subject: "Candidate Approved – Schedule Interview",
       html: `
-       Dear ${teacher.name},<br>
+       Dear ${teacherNames || "Teacher"},<br>
 
 We would like to inform you that the following candidate has been <b>approved by the Head</b> and is ready for the interview process.<br><br>
 
