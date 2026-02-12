@@ -132,7 +132,11 @@ This is an automatically generated email. Replies to this message are not monito
       res.status(201).json({ success: true, message: "Admission submitted successfully!" });
 
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      if (err && err.code === 11000) {
+        return res.status(409).json({ error: "You have already submitted the form with this email or mobile." });
+      }
+      console.error("saveAdmission failed:", err);
+      res.status(500).json({ error: err.message || "Internal server error" });
     }
   }
 );
