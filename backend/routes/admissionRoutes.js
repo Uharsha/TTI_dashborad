@@ -22,6 +22,10 @@ const MAIL_FROM =
   process.env.MAIL_USER ||
   process.env.SMTP_USER;
 const activeOnly = (query = {}) => ({ isDeleted: { $ne: true }, ...query });
+const parsePositiveInt = (value, fallback) => {
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+};
 
 const createNotification = async ({ title, message, role = "ALL", course = null, userId = null, meta = {} }) => {
   try {
@@ -669,6 +673,17 @@ router.get("/notifications", auth, async (req, res) => {
     const userId = req.user.id;
     const role = String(req.user.role || "").toUpperCase();
     const course = req.user.course || null;
+    const requestedDays = String(req.query?.days || "").trim().toLowerCase();
+    const defaultDays = parsePositiveInt(process.env.NOTIFICATION_WINDOW_DAYS, 30);
+    const days =
+      requestedDays === "all"
+        ? 0
+        : parsePositiveInt(requestedDays, defaultDays);
+    const limit = Math.min(parsePositiveInt(req.query?.limit, 50), 200);
+    const createdAtQuery =
+      days > 0
+        ? { createdAt: { $gte: new Date(Date.now() - days * 24 * 60 * 60 * 1000) } }
+        : {};
 
     const roleFilter =
       role === "TEACHER"
@@ -679,9 +694,10 @@ router.get("/notifications", auth, async (req, res) => {
 
     const notifications = await Notification.find({
       $or: [...roleFilter, { userId }],
+      ...createdAtQuery,
     })
       .sort({ createdAt: -1 })
-      .limit(50)
+      .limit(limit)
       .lean();
 
     const withReadState = notifications.map((n) => ({
@@ -692,7 +708,7 @@ router.get("/notifications", auth, async (req, res) => {
     }));
 
     const unreadCount = withReadState.filter((n) => !n.isRead).length;
-    return res.json({ success: true, unreadCount, notifications: withReadState });
+    return res.json({ success: true, unreadCount, notifications: withReadState, windowDays: days });
   } catch (err) {
     return res.status(500).json({ error: err.message || "Failed to fetch notifications" });
   }

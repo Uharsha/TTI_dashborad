@@ -4,17 +4,31 @@ import { getNotifications } from "../../server/Api";
 export default function AuditLogs() {
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState([]);
+  const [windowDays, setWindowDays] = useState("30");
 
   useEffect(() => {
-    getNotifications()
+    setLoading(true);
+    getNotifications({ days: windowDays, limit: 200 })
       .then((res) => setRows(res?.data?.notifications || []))
       .catch(() => setRows([]))
       .finally(() => setLoading(false));
-  }, []);
+  }, [windowDays]);
 
   return (
     <div style={styles.wrap}>
-      <h2 style={styles.title}>Audit Log Panel</h2>
+      <div style={styles.header}>
+        <h2 style={styles.title}>Audit Log Panel</h2>
+        <select
+          value={windowDays}
+          onChange={(e) => setWindowDays(e.target.value)}
+          style={styles.select}
+        >
+          <option value="1">Last 24 hours</option>
+          <option value="7">Last 7 days</option>
+          <option value="30">Last 30 days</option>
+          <option value="all">All time</option>
+        </select>
+      </div>
       {loading ? (
         <p style={styles.muted}>Loading logs...</p>
       ) : (
@@ -48,7 +62,9 @@ export default function AuditLogs() {
 
 const styles = {
   wrap: { maxWidth: "1080px", margin: "0 auto", padding: "1.5rem 1rem 2rem" },
+  header: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.75rem", marginBottom: "1rem", flexWrap: "wrap" },
   title: { margin: "0 0 1rem", color: "var(--text-main)" },
+  select: { border: "1px solid var(--border-color)", background: "var(--surface-card)", color: "var(--text-main)", borderRadius: 8, padding: "8px 10px", fontWeight: 600, cursor: "pointer" },
   muted: { color: "var(--text-muted)" },
   tableWrap: { overflowX: "auto", border: "1px solid var(--border-color)", borderRadius: 12, background: "var(--surface-card)" },
   table: { width: "100%", borderCollapse: "collapse", color: "var(--text-main)" },

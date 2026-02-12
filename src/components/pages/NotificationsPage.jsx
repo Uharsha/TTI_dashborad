@@ -6,12 +6,13 @@ export default function NotificationsPage() {
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState([]);
   const [unread, setUnread] = useState(0);
+  const [windowDays, setWindowDays] = useState("7");
   const toast = useToast();
 
   const load = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await getNotifications();
+      const res = await getNotifications({ days: windowDays, limit: 100 });
       setItems(res?.data?.notifications || []);
       setUnread(res?.data?.unreadCount || 0);
     } catch (err) {
@@ -19,7 +20,7 @@ export default function NotificationsPage() {
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [toast, windowDays]);
 
   useEffect(() => {
     load();
@@ -51,6 +52,16 @@ export default function NotificationsPage() {
         <h2 style={styles.title}>Notifications</h2>
         <div style={styles.actions}>
           <span style={styles.badge}>{unread} unread</span>
+          <select
+            value={windowDays}
+            onChange={(e) => setWindowDays(e.target.value)}
+            style={styles.select}
+          >
+            <option value="1">Last 24 hours</option>
+            <option value="7">Last 7 days</option>
+            <option value="30">Last 30 days</option>
+            <option value="all">All time</option>
+          </select>
           <button style={styles.btn} onClick={handleReadAll}>Mark all read</button>
         </div>
       </div>
@@ -94,6 +105,7 @@ const styles = {
   title: { margin: 0, color: "var(--text-main)" },
   actions: { display: "flex", alignItems: "center", gap: "0.75rem" },
   badge: { padding: "6px 10px", borderRadius: "999px", background: "var(--surface-muted)", border: "1px solid var(--border-color)", color: "var(--text-main)", fontWeight: 700, fontSize: 12 },
+  select: { border: "1px solid var(--border-color)", background: "var(--surface-card)", color: "var(--text-main)", borderRadius: 8, padding: "8px 10px", fontWeight: 600, cursor: "pointer" },
   btn: { border: "1px solid var(--border-color)", background: "var(--surface-card)", color: "var(--text-main)", borderRadius: 8, padding: "8px 12px", fontWeight: 700, cursor: "pointer" },
   list: { display: "grid", gap: "10px" },
   item: { border: "1px solid var(--border-color)", background: "var(--surface-card)", borderRadius: 10, padding: "12px", textAlign: "left", display: "grid", gap: "6px", cursor: "pointer", color: "var(--text-main)" },
