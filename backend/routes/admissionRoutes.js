@@ -48,6 +48,7 @@ router.post(
     { name: "UDID", maxCount: 1 },
     { name: "disability", maxCount: 1 },
     { name: "marks", maxCount: 1 },
+    { name: "Degree_memo", maxCount: 1 },
     { name: "doctor", maxCount: 1 }
   ]),
   async (req, res) => {
@@ -66,7 +67,7 @@ router.post(
         adhar: req.files["adhar"]?.[0]?.path || null,
         UDID: req.files["UDID"]?.[0]?.path || null,
         disability: req.files["disability"]?.[0]?.path || null,
-        Degree_memo: req.files["marks"]?.[0]?.path || null,
+        Degree_memo: req.files["marks"]?.[0]?.path || req.files["Degree_memo"]?.[0]?.path || null,
         doctor: req.files["doctor"]?.[0]?.path || null,
       };
 
