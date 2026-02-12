@@ -13,9 +13,9 @@ const admissionSchema = new mongoose.Schema(
     disabilityStatus: { type: String, required: true },
     education: { type: String, required: true },
     enrolledCourse: { type: String, required: true },
-    basicComputerKnowledge: { type: String, enum: ["Fair", "Good", "Excellent", "Outstanding"], required: true },
-    basicEnglishSkills: { type: String, enum: ["Fair", "Good", "Excellent", "Outstanding"], required: true },
-    ScreenReader: { type: String, enum: ["Fair", "Good", "Excellent", "Outstanding"], required: true },
+    basicComputerKnowledge: { type: String, enum: ["Fair", "Good", "Excellent", "Outstanding", "None"], required: true },
+    basicEnglishSkills: { type: String, enum: ["Fair", "Good", "Excellent", "Outstanding", "None"], required: true },
+    ScreenReader: { type: String, enum: ["Fair", "Good", "Excellent", "Outstanding", "None"], required: true },
     course: {
       type: String,
       enum: [
