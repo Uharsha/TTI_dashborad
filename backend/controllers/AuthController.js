@@ -9,7 +9,11 @@ const FRONTEND_URL = normalizeUrl(
     process.env.DASHBOARD_URL ||
     "https://tti-dashborad-99d7.vercel.app"
 );
-const SENDER_EMAIL = process.env.RESEND_FROM;
+const SENDER_EMAIL =
+  process.env.EMAIL_USER ||
+  process.env.GMAIL_USER ||
+  process.env.MAIL_USER ||
+  process.env.SMTP_USER;
 
 const getRequesterFromToken = (req) => {
   const authHeader = req.headers.authorization || "";
@@ -175,7 +179,7 @@ const forgotPassword = async (req, res) => {
     if (!SENDER_EMAIL) {
       return res.status(500).json({
         error: "Email sender is not configured on server.",
-        detail: "Set RESEND_API_KEY and RESEND_FROM in backend environment variables.",
+        detail: "Set GMAIL_USER and GMAIL_PASS (or EMAIL_USER and EMAIL_PASS) in backend environment variables.",
       });
     }
 

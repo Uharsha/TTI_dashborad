@@ -1,55 +1,41 @@
-const { Resend } = require("resend");
+const nodemailer = require("nodemailer");
+const dns = require("dns");
+
+if (typeof dns.setDefaultResultOrder === "function") {
+  dns.setDefaultResultOrder("ipv4first");
+}
 
 const clean = (value) => String(value || "").trim().replace(/^['"]|['"]$/g, "");
 
-const apiKey = clean(process.env.RESEND_API_KEY || process.env.RESEND_KEY);
-const defaultFrom = clean(
-  process.env.RESEND_FROM ||
-    process.env.EMAIL_USER ||
+const smtpUser = clean(
+  process.env.EMAIL_USER ||
     process.env.GMAIL_USER ||
-    process.env.MAIL_USER
+    process.env.MAIL_USER ||
+    process.env.SMTP_USER
 );
+const rawSmtpPass =
+  process.env.EMAIL_PASSWORD ||
+  process.env.EMAIL_PASS ||
+  process.env.GMAIL_PASS ||
+  process.env.GMAIL_PASSWORD ||
+  process.env.MAIL_PASS ||
+  process.env.SMTP_PASS;
+const smtpPass = rawSmtpPass ? clean(rawSmtpPass).replace(/\s+/g, "") : "";
 
-if (!apiKey) {
-  console.warn("Mailer not configured: missing RESEND_API_KEY.");
+if (!smtpUser || !smtpPass) {
+  console.warn("Mailer not configured: missing EMAIL/GMAIL credentials.");
 }
-if (!defaultFrom) {
-  console.warn("Mailer not configured: missing RESEND_FROM.");
-}
 
-const resend = apiKey ? new Resend(apiKey) : null;
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST || "smtp.gmail.com",
+  port: Number(process.env.SMTP_PORT || 587),
+  secure: String(process.env.SMTP_SECURE || "false").toLowerCase() === "true",
+  auth: {
+    user: smtpUser,
+    pass: smtpPass,
+  },
+});
 
-const sendMail = async (options = {}) => {
-  if (!resend) {
-    throw new Error("Resend client is not configured (missing RESEND_API_KEY).");
-  }
-
-  const {
-    from,
-    to,
-    subject,
-    html,
-    text,
-    cc,
-    bcc,
-    replyTo,
-  } = options;
-
-  const resolvedFrom = clean(from || defaultFrom);
-  if (!resolvedFrom) {
-    throw new Error("Missing sender email (RESEND_FROM).");
-  }
-
-  return resend.emails.send({
-    from: resolvedFrom,
-    to,
-    subject,
-    html,
-    text,
-    cc,
-    bcc,
-    replyTo,
-  });
-};
+const sendMail = async (options = {}) => transporter.sendMail(options);
 
 module.exports = { sendMail };

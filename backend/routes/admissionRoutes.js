@@ -14,7 +14,11 @@ const DASHBOARD_URL = normalizeUrl(
     process.env.FRONTEND_URL ||
     "https://tti-dashborad-99d7.vercel.app"
 );
-const MAIL_FROM = process.env.RESEND_FROM;
+const MAIL_FROM =
+  process.env.EMAIL_USER ||
+  process.env.GMAIL_USER ||
+  process.env.MAIL_USER ||
+  process.env.SMTP_USER;
 const activeOnly = (query = {}) => ({ isDeleted: { $ne: true }, ...query });
 
 const safeSendMail = async (mailOptions) => {
@@ -30,7 +34,7 @@ const safeSendMail = async (mailOptions) => {
   }
 };
 
-// Simple admin-only test mail endpoint for verifying Resend config
+// Simple admin-only test mail endpoint for verifying SMTP config
 router.post("/test-mail", auth, async (req, res) => {
   try {
     if (req.user.role !== "HEAD") {
@@ -597,6 +601,7 @@ router.get("/interview_required", auth, async (req, res) => {
 });
 
 module.exports = router;
+
 
 
 
