@@ -69,6 +69,10 @@ const admissionSchema = new mongoose.Schema(
     Degree_memo: String,
     doctor: String,
     RulesDeclaration: { type: Boolean, required: true, default: false },
+    isDeleted: { type: Boolean, default: false, index: true },
+    deletedAt: { type: Date, default: null },
+    deletedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+    deletionReason: { type: String, default: "" },
   },
   { timestamps: true }
 );

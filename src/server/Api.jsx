@@ -58,6 +58,8 @@ export const headApproveStudent = (id) => API.put(`/head/approve/${id}`);
 
 // Reject student (HEAD only)
 export const headRejectStudent = (id) => API.put(`/head/reject/${id}`);
+export const headDeleteStudent = (id, reason = "") =>
+  API.put(`/head/delete/${id}`, { reason });
 
 /* ================= TEACHER ACTIONS ================= */
 

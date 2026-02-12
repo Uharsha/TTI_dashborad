@@ -4,6 +4,7 @@ import "./StudentDiv.css";
 import { useToast } from "./ui/ToastContext";
 import {
   headApproveStudent,
+  headDeleteStudent,
   headRejectStudent,
   teacherApproveStudent,
   teacherRejectStudent,
@@ -32,6 +33,28 @@ function StudentTable({ students, refresh }) {
       toast.success("Action completed.");
     } catch (err) {
       toast.error(err?.response?.data?.error || "Action failed.");
+    } finally {
+      setActionLoading(false);
+      setActionKey("");
+    }
+  };
+
+  const handleHeadDelete = async (student) => {
+    if (actionLoading) return;
+    const confirmed = window.confirm(`Delete application for ${student.name}? This can be restored only from DB.`);
+    if (!confirmed) return;
+
+    const reason = window.prompt("Reason for delete (optional):", "") || "";
+
+    setActionLoading(true);
+    setActionKey(`${student._id}:head-delete`);
+    try {
+      await headDeleteStudent(student._id, reason);
+      setSelectedStudent(null);
+      refresh();
+      toast.success("Application deleted.");
+    } catch (err) {
+      toast.error(err?.response?.data?.error || "Delete failed.");
     } finally {
       setActionLoading(false);
       setActionKey("");
@@ -180,6 +203,19 @@ function StudentTable({ students, refresh }) {
                     {actionKey === `${selectedStudent._id}:head-reject` ? "Processing..." : "Reject Application"}
                   </button>
                 </>
+              )}
+              {role === "HEAD" && (
+                <button
+                  onClick={() => handleHeadDelete(selectedStudent)}
+                  disabled={actionLoading}
+                  style={{
+                    ...styles.actionButton,
+                    backgroundColor: "#6c757d",
+                    ...(actionLoading ? styles.disabledActionButton : {}),
+                  }}
+                >
+                  {actionKey === `${selectedStudent._id}:head-delete` ? "Deleting..." : "Delete Application"}
+                </button>
               )}
               {selectedStudent.status === "HEAD_ACCEPTED" && role === "TEACHER" && (
                 <a

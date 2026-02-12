@@ -20,6 +20,7 @@ const MAIL_FROM =
   process.env.GMAIL_USER ||
   process.env.MAIL_USER ||
   process.env.SMTP_USER;
+const activeOnly = (query = {}) => ({ isDeleted: { $ne: true }, ...query });
 
 const safeSendMail = async (mailOptions) => {
   try {
@@ -195,7 +196,7 @@ router.put("/head/approve/:id", auth, async (req, res) => {
       return res.status(403).json({ error: "Only HEAD can approve applications" });
     }
 
-    const user = await Admission.findById(req.params.id);
+    const user = await Admission.findOne(activeOnly({ _id: req.params.id }));
     if (!user) return res.status(404).json({ message: "Invalid request" });
 
     const teacherEntry = COURSE_TEACHERS[user.course];
@@ -259,7 +260,7 @@ router.put("/head/reject/:id", auth, async (req, res) => {
       return res.status(403).json({ error: "Only HEAD can reject applications" });
     }
 
-    const user = await Admission.findById(req.params.id);
+    const user = await Admission.findOne(activeOnly({ _id: req.params.id }));
     if (!user) return res.status(404).json({ message: "Invalid request" });
 
     user.status = "HEAD_REJECTED";
@@ -309,6 +310,29 @@ router.put("/head/reject/:id", auth, async (req, res) => {
   }
 });
 
+/* ================== HEAD DELETE (SOFT DELETE) ================== */
+router.put("/head/delete/:id", auth, async (req, res) => {
+  try {
+    if (req.user.role !== "HEAD") {
+      return res.status(403).json({ error: "Only HEAD can delete applications" });
+    }
+
+    const user = await Admission.findOne(activeOnly({ _id: req.params.id }));
+    if (!user) return res.status(404).json({ error: "Application not found or already deleted" });
+
+    const reason = String(req.body?.reason || "").trim();
+    user.isDeleted = true;
+    user.deletedAt = new Date();
+    user.deletedBy = req.user.id || null;
+    user.deletionReason = reason.slice(0, 500);
+    await user.save();
+
+    return res.json({ success: true, message: "Application deleted successfully." });
+  } catch (err) {
+    return res.status(500).json({ error: err.message || "Delete failed" });
+  }
+});
+
 /* ================== SCHEDULE INTERVIEW (TEACHER ONLY) ================== */
 router.post("/schedule-interview/:id", auth, async (req, res) => {
   try {
@@ -319,7 +343,7 @@ router.post("/schedule-interview/:id", auth, async (req, res) => {
 
     const { date, time, platform, link } = req.body;
 
-    const student = await Admission.findById(req.params.id);
+    const student = await Admission.findOne(activeOnly({ _id: req.params.id }));
     if (!student) return res.status(404).json({ message: "Invalid request" });
 
     // Verify teacher's course matches student's course
@@ -373,7 +397,7 @@ router.put("/final/approve/:id", auth, async (req, res) => {
       return res.status(403).json({ error: "Only TEACHER can give final approval" });
     }
 
-    const user = await Admission.findById(req.params.id);
+    const user = await Admission.findOne(activeOnly({ _id: req.params.id }));
     if (!user) return res.status(404).json({ message: "Invalid request" });
 
     // Verify teacher's course matches student's course
@@ -423,7 +447,7 @@ router.put("/final/reject/:id", auth, async (req, res) => {
       return res.status(403).json({ error: "Only TEACHER can give final rejection" });
     }
 
-    const user = await Admission.findById(req.params.id);
+    const user = await Admission.findOne(activeOnly({ _id: req.params.id }));
     if (!user) return res.status(404).json({ message: "Invalid request" });
 
     // Verify teacher's course matches student's course
@@ -482,7 +506,7 @@ router.get("/get-data", auth, async (req, res) => {
     }
     // HEAD sees all applications (query remains empty)
 
-    const admissions = await Admission.find(query);
+    const admissions = await Admission.find(activeOnly(query));
     res.json(admissions);
   } catch (err) {
     res.status(500).json({ error: "Error fetching admissions" });
@@ -494,7 +518,7 @@ router.get("/submitted", auth, async (req, res) => {
   if (req.user.role !== "HEAD") {
     return res.status(403).json({ error: "Only HEAD can view submitted applications" });
   }
-  res.json(await Admission.find({ status: "SUBMITTED" }));
+  res.json(await Admission.find(activeOnly({ status: "SUBMITTED" })));
 });
 
 // HEAD ACCEPTED APPLICATIONS
@@ -502,7 +526,7 @@ router.get("/head-accepted", auth, async (req, res) => {
   if (req.user.role !== "HEAD") {
     return res.status(403).json({ error: "Only HEAD can view head-accepted applications" });
   }
-  res.json(await Admission.find({ status: "HEAD_ACCEPTED" }));
+  res.json(await Admission.find(activeOnly({ status: "HEAD_ACCEPTED" })));
 });
 
 // HEAD REJECTED APPLICATIONS
@@ -510,7 +534,7 @@ router.get("/head-rejected", auth, async (req, res) => {
   if (req.user.role !== "HEAD") {
     return res.status(403).json({ error: "Only HEAD can view head-rejected applications" });
   }
-  res.json(await Admission.find({ status: "HEAD_REJECTED" }));
+  res.json(await Admission.find(activeOnly({ status: "HEAD_REJECTED" })));
 });
 
 // HEAD FINAL SELECTED CANDIDATES
@@ -518,7 +542,7 @@ router.get("/head/final-selected", auth, async (req, res) => {
   if (req.user.role !== "HEAD") {
     return res.status(403).json({ error: "Only HEAD can view final selected candidates" });
   }
-  res.json(await Admission.find({ finalStatus: "SELECTED" }));
+  res.json(await Admission.find(activeOnly({ finalStatus: "SELECTED" })));
 });
 
 // HEAD FINAL REJECTED CANDIDATES
@@ -526,7 +550,7 @@ router.get("/head/final-rejected", auth, async (req, res) => {
   if (req.user.role !== "HEAD") {
     return res.status(403).json({ error: "Only HEAD can view final rejected candidates" });
   }
-  res.json(await Admission.find({ finalStatus: "REJECTED" }));
+  res.json(await Admission.find(activeOnly({ finalStatus: "REJECTED" })));
 });
 
 // TEACHER APPROVED CANDIDATES
@@ -540,7 +564,7 @@ router.get("/teacher-accepted", auth, async (req, res) => {
       ? { finalStatus: "SELECTED" }
       : { course: req.user.course, finalStatus: "SELECTED" };
 
-  res.json(await Admission.find(query));
+  res.json(await Admission.find(activeOnly(query)));
 });
 
 // TEACHER HEAD ACCEPTED CANDIDATES (for interview scheduling)
@@ -548,7 +572,7 @@ router.get("/teacher-head-accepted", auth, async (req, res) => {
   if (req.user.role !== "TEACHER") {
     return res.status(403).json({ error: "Only TEACHER can view head-accepted candidates" });
   }
-  res.json(await Admission.find({ course: req.user.course, status: "HEAD_ACCEPTED" }));
+  res.json(await Admission.find(activeOnly({ course: req.user.course, status: "HEAD_ACCEPTED" })));
 });
 
 // TEACHER REJECTED CANDIDATES
@@ -562,7 +586,7 @@ router.get("/teacher-rejected", auth, async (req, res) => {
       ? { finalStatus: "REJECTED" }
       : { course: req.user.course, finalStatus: "REJECTED" };
 
-  res.json(await Admission.find(query));
+  res.json(await Admission.find(activeOnly(query)));
 });
 
 // INTERVIEW SCHEDULED
@@ -574,8 +598,10 @@ router.get("/interview_required", auth, async (req, res) => {
     query.course = course; // Teachers see only their course interviews
   }
 
-  res.json(await Admission.find(query));
+  res.json(await Admission.find(activeOnly(query)));
 });
 
 module.exports = router;
+
+
 
