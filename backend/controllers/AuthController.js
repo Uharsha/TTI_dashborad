@@ -167,7 +167,7 @@ const forgotPassword = async (req, res) => {
 
     const resetUrl = `${FRONTEND_URL}/auth?mode=reset&token=${encodeURIComponent(token)}`;
 
-    if (!GMAIL_USER) {
+    if (!SENDER_EMAIL) {
       return res.status(500).json({
         error: "Email sender is not configured on server.",
         detail: "Set EMAIL_USER in backend environment variables.",
@@ -176,7 +176,7 @@ const forgotPassword = async (req, res) => {
 
     try {
       await transporter.sendMail({
-        from: GMAIL_USER,
+        from: SENDER_EMAIL,
         to: user.email,
         subject: "Reset your password - TTI Dashboard",
         html: `
