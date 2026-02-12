@@ -12,8 +12,26 @@ const authRoutes = require("./routes/authRoutes");
 // Initialize Express
 const app = express();
 
+const allowedOrigins = (
+  process.env.CORS_ORIGINS ||
+  [process.env.FRONTEND_URL, process.env.BASE_URL, "http://localhost:3000"].filter(Boolean).join(",")
+)
+  .split(",")
+  .map((origin) => origin.trim().replace(/\/+$/, ""))
+  .filter(Boolean);
+
 // Middleware
-app.use(cors());
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      const normalized = origin.replace(/\/+$/, "");
+      if (allowedOrigins.includes(normalized)) return callback(null, true);
+      return callback(new Error("CORS not allowed"));
+    },
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 

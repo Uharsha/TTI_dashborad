@@ -8,6 +8,17 @@ const Admission = require("../models/Admission");
 const transporter = require("../utils/mailer");
 const COURSE_TEACHERS = require("../utils/teacher");
 const auth = require("../models/Middleware/Auth");
+const DASHBOARD_URL = (process.env.FRONTEND_URL || process.env.BASE_URL || "http://localhost:3000").replace(/\/+$/, "");
+
+const safeSendMail = async (mailOptions) => {
+  try {
+    await transporter.sendMail(mailOptions);
+    return true;
+  } catch (err) {
+    console.error("Mail send failed:", err.message);
+    return false;
+  }
+};
 
 /* ================== CLOUDINARY CONFIG ================== */
 cloudinary.config({
@@ -68,7 +79,7 @@ router.post(
       const user = await admission.save();
 
       /* 📧 MAIL TO STUDENT */
-      await transporter.sendMail({
+      await safeSendMail({
         to: user.email,
         subject: "Admission Submitted – TTI",
         html: `Dear ${user.name}, <br> <br>
@@ -78,7 +89,7 @@ Thank you for applying to the <b>TTI Foundation</b>.<br>
 We are pleased to inform you that your admission application has been <b>successfully submitted</b>. Our team will review your application, and you will be notified about the next steps via email.<br>
 
 Please ensure that you regularly check your email for updates regarding your application status.<br><br>
-if you have any questions or need further assistance, feel free to contact us at <a href="tel:${process.env.CONTACT_NUMBER}">${process.env.CONTACT_NUMBER}</a> or <a href="mailto:${process.env.HEAD_EMAIL}">${process.env.HEAD_EMAIL}</a><br><br>
+if you have any questions or need further assistance, feel free to contact us at <a href="tel:${process.env.CONTACT_NUMBER}">${process.env.CONTACT_NUMBER}</a> <br><br>
 Warm regards,<br>
 <b>TTI Foundation – Admissions Team</b><br><br>
 <p style="font-size:12px;color:#666;">
@@ -88,7 +99,7 @@ This is an automatically generated email. Replies to this message are not monito
       });
 
       /* 📧 MAIL TO HEAD */
-      await transporter.sendMail({
+      await safeSendMail({
         to: process.env.HEAD_EMAIL,
         subject: "New Admission Request",
         html: `
@@ -105,12 +116,9 @@ Course Applied: ${user.course}<br>
       </a>
     </p>
     <p>call: <a href="tel:${user.mobile}">${user.mobile}</a></p>
-    <a href="${process.env.BASE_URL}/admission/head/approve/${user._id}" target="_blank">Accept Admission</a>
-    <br>
-    <a href="${process.env.BASE_URL}/admission/reject/${user._id}" target="_blank">Reject Admission</a>
-    <br><br>
 
-Please log in to the admin dashboard to review and take the necessary action.<br><br>
+Please log in to the admin dashboard to review and take the necessary action.<br>
+Dashboard: <a href="${DASHBOARD_URL}" target="_blank">${DASHBOARD_URL}</a><br><br>
 
 Regards,<br>
 <b>TTI Foundation – Admission System</b><br>
@@ -149,13 +157,13 @@ router.put("/head/approve/:id", auth, async (req, res) => {
     await user.save();
 
     /* 📧 MAIL ONLY TO TEACHER */
-    await transporter.sendMail({
+    await safeSendMail({
       to: teacher.email,
       subject: "Candidate Approved – Schedule Interview",
       html: `
        Dear ${teacher.name},<br>
 
-We would like to inform you that the following candidate has been **approved by the Head** and is ready for the interview process.<br><br>
+We would like to inform you that the following candidate has been <b>approved by the Head</b> and is ready for the interview process.<br><br>
 
 <b>Candidate Details</b><br>
 Name: ${user.name}<br>
@@ -166,7 +174,8 @@ Course: ${user.course}<br>
       </a>
     </p>
 
-Please log in to the dashboard and schedule the interview at your convenience.<br><br>
+Please log in to the dashboard and schedule the interview at your convenience.<br>
+Dashboard: <a href="${DASHBOARD_URL}" target="_blank">${DASHBOARD_URL}</a><br><br>
 
 Best regards,<br>
 <b>TTI Foundation – Admissions Team</b><br>
@@ -199,7 +208,7 @@ router.put("/head/reject/:id", auth, async (req, res) => {
     user.decisionDone = true;
     await user.save();
 
-    await transporter.sendMail({
+    await safeSendMail({
       to: user.email,
       subject: "Application Rejected",
       html: `
@@ -266,7 +275,7 @@ router.post("/schedule-interview/:id", auth, async (req, res) => {
     );
 
     // 📧 Mail interview details to student
-    await transporter.sendMail({
+    await safeSendMail({
       to: updatedStudent.email,
       subject: "Interview Scheduled – TTI",
       html: `
@@ -319,7 +328,7 @@ router.put("/final/approve/:id", auth, async (req, res) => {
     await user.save();
 
     // 📧 Congratulations mail
-    await transporter.sendMail({
+    await safeSendMail({
       to: user.email,
       subject: "Congratulations – TTI",
       html: `
@@ -369,7 +378,7 @@ router.put("/final/reject/:id", auth, async (req, res) => {
     await user.save();
 
     // 📧 Apology mail
-    await transporter.sendMail({
+    await safeSendMail({
       to: user.email,
       subject: "Interview Result – TTI",
       html: `
@@ -482,3 +491,4 @@ router.get("/interview_required", auth, async (req, res) => {
 });
 
 module.exports = router;
+
