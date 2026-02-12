@@ -26,7 +26,7 @@ const getRequesterFromToken = (req) => {
 // LOGIN
 const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password } = req.body || {};
 
     if (!email || !password) {
       return res.status(400).json({ error: "Email and password are required" });
@@ -75,7 +75,7 @@ const login = async (req, res) => {
 // REGISTER
 const register = async (req, res) => {
   try {
-    const { name, email, password, role, course } = req.body;
+    const { name, email, password, role, course } = req.body || {};
     const normalizedRole = String(role || "").trim().toUpperCase();
     const normalizedCourse = String(course || "").trim();
 
@@ -152,7 +152,7 @@ const register = async (req, res) => {
 
 const forgotPassword = async (req, res) => {
   try {
-    const { email } = req.body;
+    const { email } = req.body || {};
     if (!email) {
       return res.status(400).json({ error: "Email is required." });
     }
@@ -209,7 +209,7 @@ const forgotPassword = async (req, res) => {
 
 const resetPassword = async (req, res) => {
   try {
-    const { token, password } = req.body;
+    const { token, password } = req.body || {};
 
     if (!token || !password) {
       return res.status(400).json({ error: "Token and new password are required." });
