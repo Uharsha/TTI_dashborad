@@ -4,11 +4,7 @@ const bcrypt = require("bcrypt");
 const transporter = require("../utils/mailer");
 
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
-const SENDER_EMAIL =
-  process.env.EMAIL_USER ||
-  process.env.GMAIL_USER ||
-  process.env.MAIL_USER ||
-  process.env.SMTP_USER;
+const SENDER_EMAIL = process.env.EMAIL_USER;
 
 const getRequesterFromToken = (req) => {
   const authHeader = req.headers.authorization || "";
@@ -171,16 +167,16 @@ const forgotPassword = async (req, res) => {
 
     const resetUrl = `${FRONTEND_URL}/auth?mode=reset&token=${encodeURIComponent(token)}`;
 
-    if (!SENDER_EMAIL) {
+    if (!GMAIL_USER) {
       return res.status(500).json({
         error: "Email sender is not configured on server.",
-        detail: "Set EMAIL_USER or GMAIL_USER in backend environment variables.",
+        detail: "Set EMAIL_USER in backend environment variables.",
       });
     }
 
     try {
       await transporter.sendMail({
-        from: SENDER_EMAIL,
+        from: GMAIL_USER,
         to: user.email,
         subject: "Reset your password - TTI Dashboard",
         html: `
