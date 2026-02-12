@@ -5,8 +5,8 @@
   background: rgba(0,0,0,0.7);
   display: flex;
   justify-content: center;
-  align-items: center;
-  padding: 16px;
+  align-items: flex-start;
+  padding: 96px 16px 16px;
   z-index: 1000;
 }
 
@@ -59,6 +59,10 @@
 
 /* 📱 MOBILE RESPONSIVE */
 @media (max-width: 768px) {
+
+  .modalOverlay {
+    padding: 86px 10px 10px;
+  }
 
   .modalContent {
     padding: 18px;
