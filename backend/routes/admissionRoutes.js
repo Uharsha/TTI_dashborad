@@ -8,11 +8,24 @@ const Admission = require("../models/Admission");
 const transporter = require("../utils/mailer");
 const COURSE_TEACHERS = require("../utils/teacher");
 const auth = require("../models/Middleware/Auth");
-const DASHBOARD_URL = (process.env.FRONTEND_URL || process.env.BASE_URL || "http://localhost:3000").replace(/\/+$/, "");
+const normalizeUrl = (value = "") => String(value).trim().replace(/\/+$/, "");
+const DASHBOARD_URL = normalizeUrl(
+  process.env.DASHBOARD_URL ||
+    process.env.FRONTEND_URL ||
+    "https://tti-dashborad-99d7.vercel.app"
+);
+const MAIL_FROM =
+  process.env.EMAIL_USER ||
+  process.env.GMAIL_USER ||
+  process.env.MAIL_USER ||
+  process.env.SMTP_USER;
 
 const safeSendMail = async (mailOptions) => {
   try {
-    await transporter.sendMail(mailOptions);
+    await transporter.sendMail({
+      from: MAIL_FROM,
+      ...mailOptions,
+    });
     return true;
   } catch (err) {
     console.error("Mail send failed:", err.message);
@@ -100,6 +113,9 @@ This is an automatically generated email. Replies to this message are not monito
       });
 
       /* 📧 MAIL TO HEAD */
+      if (!process.env.HEAD_EMAIL) {
+        console.error("HEAD_EMAIL is not configured; skipping head notification email.");
+      } else {
       await safeSendMail({
         to: process.env.HEAD_EMAIL,
         subject: "New Admission Request",
@@ -129,6 +145,7 @@ This is an automatically generated email. Replies to this message are not monito
 
         `,
       });
+      }
 
       res.status(201).json({ success: true, message: "Admission submitted successfully!" });
 

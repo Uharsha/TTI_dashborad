@@ -3,8 +3,17 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const transporter = require("../utils/mailer");
 
-const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
-const SENDER_EMAIL = process.env.GMAIL_USER;
+const normalizeUrl = (value = "") => String(value).trim().replace(/\/+$/, "");
+const FRONTEND_URL = normalizeUrl(
+  process.env.FRONTEND_URL ||
+    process.env.DASHBOARD_URL ||
+    "https://tti-dashborad-99d7.vercel.app"
+);
+const SENDER_EMAIL =
+  process.env.EMAIL_USER ||
+  process.env.GMAIL_USER ||
+  process.env.MAIL_USER ||
+  process.env.SMTP_USER;
 
 const getRequesterFromToken = (req) => {
   const authHeader = req.headers.authorization || "";
@@ -170,7 +179,7 @@ const forgotPassword = async (req, res) => {
     if (!SENDER_EMAIL) {
       return res.status(500).json({
         error: "Email sender is not configured on server.",
-        detail: "Set EMAIL_USER in backend environment variables.",
+        detail: "Set EMAIL_USER (or GMAIL_USER) in backend environment variables.",
       });
     }
 
