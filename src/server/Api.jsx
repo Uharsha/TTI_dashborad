@@ -41,6 +41,10 @@ export const getTeacherHeadAcceptedStudents = () => API.get("/teacher-head-accep
 // Teacher rejected candidates
 export const getTeacherRejectedStudents = () => API.get("/teacher-rejected");
 
+// Head final selected and rejected candidates
+export const getHeadFinalSelectedStudents = () => API.get("/head/final-selected");
+export const getHeadFinalRejectedStudents = () => API.get("/head/final-rejected");
+
 // Students needing interview scheduling (HEAD + TEACHER)
 export const getInterviewRequiredStudents = () => API.get("/interview_required");
 

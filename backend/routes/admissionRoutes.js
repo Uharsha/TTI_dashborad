@@ -454,12 +454,34 @@ router.get("/head-rejected", auth, async (req, res) => {
   res.json(await Admission.find({ status: "HEAD_REJECTED" }));
 });
 
+// HEAD FINAL SELECTED CANDIDATES
+router.get("/head/final-selected", auth, async (req, res) => {
+  if (req.user.role !== "HEAD") {
+    return res.status(403).json({ error: "Only HEAD can view final selected candidates" });
+  }
+  res.json(await Admission.find({ finalStatus: "SELECTED" }));
+});
+
+// HEAD FINAL REJECTED CANDIDATES
+router.get("/head/final-rejected", auth, async (req, res) => {
+  if (req.user.role !== "HEAD") {
+    return res.status(403).json({ error: "Only HEAD can view final rejected candidates" });
+  }
+  res.json(await Admission.find({ finalStatus: "REJECTED" }));
+});
+
 // TEACHER APPROVED CANDIDATES
 router.get("/teacher-accepted", auth, async (req, res) => {
-  if (req.user.role !== "TEACHER") {
-    return res.status(403).json({ error: "Only TEACHER can view approved candidates" });
+  if (req.user.role !== "TEACHER" && req.user.role !== "HEAD") {
+    return res.status(403).json({ error: "Only TEACHER or HEAD can view approved candidates" });
   }
-  res.json(await Admission.find({ course: req.user.course, finalStatus: "SELECTED" }));
+
+  const query =
+    req.user.role === "HEAD"
+      ? { finalStatus: "SELECTED" }
+      : { course: req.user.course, finalStatus: "SELECTED" };
+
+  res.json(await Admission.find(query));
 });
 
 // TEACHER HEAD ACCEPTED CANDIDATES (for interview scheduling)
@@ -472,10 +494,16 @@ router.get("/teacher-head-accepted", auth, async (req, res) => {
 
 // TEACHER REJECTED CANDIDATES
 router.get("/teacher-rejected", auth, async (req, res) => {
-  if (req.user.role !== "TEACHER") {
-    return res.status(403).json({ error: "Only TEACHER can view rejected candidates" });
+  if (req.user.role !== "TEACHER" && req.user.role !== "HEAD") {
+    return res.status(403).json({ error: "Only TEACHER or HEAD can view rejected candidates" });
   }
-  res.json(await Admission.find({ course: req.user.course, finalStatus: "REJECTED" }));
+
+  const query =
+    req.user.role === "HEAD"
+      ? { finalStatus: "REJECTED" }
+      : { course: req.user.course, finalStatus: "REJECTED" };
+
+  res.json(await Admission.find(query));
 });
 
 // INTERVIEW SCHEDULED
