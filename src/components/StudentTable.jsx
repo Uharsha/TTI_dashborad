@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import EmptyState from "./pages/EmptyState";
 import "./StudentDiv.css";
 import { useToast } from "./ui/ToastContext";
@@ -16,6 +16,15 @@ function StudentTable({ students, refresh, enableSelection = false, selectedIds 
   const [actionKey, setActionKey] = useState("");
   const role = localStorage.getItem("role");
   const toast = useToast();
+
+  useEffect(() => {
+    if (!selectedStudent) return undefined;
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") setSelectedStudent(null);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [selectedStudent]);
 
   if (!Array.isArray(students) || students.length === 0) {
     return <EmptyState />;
@@ -102,6 +111,7 @@ function StudentTable({ students, refresh, enableSelection = false, selectedIds 
               type="checkbox"
               checked={selectedIds.includes(s._id)}
               onChange={() => onToggleSelected(s._id)}
+              aria-label={`Select ${s.name}`}
               style={{ position: "absolute", left: 10, top: 10 }}
             />
           )}
@@ -114,16 +124,16 @@ function StudentTable({ students, refresh, enableSelection = false, selectedIds 
           )}
           <h3 style={styles.cardName}>{s.name}</h3>
           <p style={styles.cardCourse}>{s.course}</p>
-          <button onClick={() => setSelectedStudent(s)} style={styles.viewButton}>
+          <button type="button" onClick={() => setSelectedStudent(s)} style={styles.viewButton}>
             View Profile
           </button>
         </div>
       ))}
 
       {selectedStudent && (
-        <div className="modalOverlay">
-          <div className="modalContent">
-            <button onClick={() => setSelectedStudent(null)} style={styles.closeButton}>
+        <div className="modalOverlay" onClick={(e) => e.target === e.currentTarget && setSelectedStudent(null)}>
+          <div className="modalContent" role="dialog" aria-modal="true" aria-labelledby="student-details-title">
+            <button type="button" onClick={() => setSelectedStudent(null)} style={styles.closeButton} aria-label="Close details">
               x
             </button>
 
@@ -136,7 +146,7 @@ function StudentTable({ students, refresh, enableSelection = false, selectedIds 
                 <img src="/default-user.png" alt="Student profile" className="profileImage" />
               )}
               <div>
-                <h2 style={styles.profileName}>{selectedStudent.name}</h2>
+                  <h2 id="student-details-title" style={styles.profileName}>{selectedStudent.name}</h2>
                 <p style={{ ...styles.profileStatus, color: getStatusColor(selectedStudent.status) }}>
                   Status: {selectedStudent.status}
                 </p>
@@ -145,31 +155,31 @@ function StudentTable({ students, refresh, enableSelection = false, selectedIds 
 
             <div className="detailsGrid">
               <div>
-                <p>
-                  <strong>Email:</strong>{" "}
+                <p style={styles.detailLine}>
+                  <strong style={styles.detailKey}>Email:</strong>{" "}
                   <a href={`mailto:${selectedStudent.email}`} style={styles.link}>
                     {selectedStudent.email}
                   </a>
                 </p>
-                <p>
-                  <strong>Mobile:</strong>
+                <p style={styles.detailLine}>
+                  <strong style={styles.detailKey}>Mobile:</strong>{" "}
                   <a href={`tel:${selectedStudent.mobile}`} style={styles.link}>
                     {selectedStudent.mobile}
                   </a>
                 </p>
-                <p><strong>DOB:</strong> {new Date(selectedStudent.dob).toLocaleDateString()}</p>
-                <p><strong>Gender:</strong> {selectedStudent.gender}</p>
-                <p><strong>State/Dist:</strong> {selectedStudent.state}, {selectedStudent.district}</p>
+                <p style={styles.detailLine}><strong style={styles.detailKey}>DOB:</strong> <span style={styles.detailValue}>{new Date(selectedStudent.dob).toLocaleDateString()}</span></p>
+                <p style={styles.detailLine}><strong style={styles.detailKey}>Gender:</strong> <span style={styles.detailValue}>{selectedStudent.gender}</span></p>
+                <p style={styles.detailLine}><strong style={styles.detailKey}>State/Dist:</strong> <span style={styles.detailValue}>{selectedStudent.state}, {selectedStudent.district}</span></p>
               </div>
               <div>
-                <p><strong>Disability:</strong> {selectedStudent.disabilityStatus}</p>
-                <p><strong>Education:</strong> {selectedStudent.education}</p>
-                <p><strong>Computer:</strong> {selectedStudent.basicComputerKnowledge}</p>
-                <p><strong>English:</strong> {selectedStudent.basicEnglishSkills}</p>
-                <p><strong>NVDA:</strong> {selectedStudent.ScreenReader || "N/A"}</p>
-                <p><strong>Enrolled:</strong> {selectedStudent.enrolledCourse}</p>
+                <p style={styles.detailLine}><strong style={styles.detailKey}>Disability:</strong> <span style={styles.detailValue}>{selectedStudent.disabilityStatus}</span></p>
+                <p style={styles.detailLine}><strong style={styles.detailKey}>Education:</strong> <span style={styles.detailValue}>{selectedStudent.education}</span></p>
+                <p style={styles.detailLine}><strong style={styles.detailKey}>Computer:</strong> <span style={styles.detailValue}>{selectedStudent.basicComputerKnowledge}</span></p>
+                <p style={styles.detailLine}><strong style={styles.detailKey}>English:</strong> <span style={styles.detailValue}>{selectedStudent.basicEnglishSkills}</span></p>
+                <p style={styles.detailLine}><strong style={styles.detailKey}>NVDA:</strong> <span style={styles.detailValue}>{selectedStudent.ScreenReader || "N/A"}</span></p>
+                <p style={styles.detailLine}><strong style={styles.detailKey}>Enrolled:</strong> <span style={styles.detailValue}>{selectedStudent.enrolledCourse}</span></p>
                 <p style={styles.rulesText}>
-                  TTI Rules: <strong>Candidate has accepted the rules and regulations</strong>
+                  TTI Rules: <strong style={styles.detailKey}>Candidate has accepted the rules and regulations</strong>
                 </p>
               </div>
             </div>
@@ -212,6 +222,7 @@ function StudentTable({ students, refresh, enableSelection = false, selectedIds 
               {selectedStudent.status === "SUBMITTED" && (
                 <>
                   <button
+                    type="button"
                     onClick={() => handleAction(headApproveStudent, selectedStudent._id, "head-approve")}
                     disabled={actionLoading}
                     style={{
@@ -223,6 +234,7 @@ function StudentTable({ students, refresh, enableSelection = false, selectedIds 
                     {actionKey === `${selectedStudent._id}:head-approve` ? "Processing..." : "Approve Application"}
                   </button>
                   <button
+                    type="button"
                     onClick={() => handleAction(headRejectStudent, selectedStudent._id, "head-reject")}
                     disabled={actionLoading}
                     style={{
@@ -237,6 +249,7 @@ function StudentTable({ students, refresh, enableSelection = false, selectedIds 
               )}
               {role === "HEAD" && (
                 <button
+                  type="button"
                   onClick={() => handleHeadDelete(selectedStudent)}
                   disabled={actionLoading}
                   style={{
@@ -259,6 +272,7 @@ function StudentTable({ students, refresh, enableSelection = false, selectedIds 
               {selectedStudent.status === "INTERVIEW_SCHEDULED" && (
                 <>
                   <button
+                    type="button"
                     onClick={() => handleAction(teacherApproveStudent, selectedStudent._id, "teacher-approve")}
                     disabled={actionLoading}
                     style={{
@@ -270,6 +284,7 @@ function StudentTable({ students, refresh, enableSelection = false, selectedIds 
                     {actionKey === `${selectedStudent._id}:teacher-approve` ? "Processing..." : "Confirm Selection"}
                   </button>
                   <button
+                    type="button"
                     onClick={() => handleAction(teacherRejectStudent, selectedStudent._id, "teacher-reject")}
                     disabled={actionLoading}
                     style={{
@@ -301,7 +316,9 @@ const styles = {
     padding: "20px",
   },
   card: {
-    backgroundColor: "#fff",
+    backgroundColor: "var(--surface-card)",
+    color: "var(--text-main)",
+    border: "1px solid var(--border-color)",
     borderRadius: "12px",
     padding: "15px",
     width: "100%",
@@ -318,11 +335,11 @@ const styles = {
   },
   cardName: {
     margin: "10px 0 5px",
-    color: "#2c3e50",
+    color: "var(--text-main)",
     fontWeight: "700",
   },
   cardCourse: {
-    color: "#667eea",
+    color: "var(--text-muted)",
     fontSize: "14px",
     fontWeight: "600",
   },
@@ -342,13 +359,14 @@ const styles = {
     top: "15px",
     right: "20px",
     border: "none",
-    background: "none",
+    background: "transparent",
+    color: "var(--text-main)",
     fontSize: "24px",
     cursor: "pointer",
   },
   profileName: {
     margin: 0,
-    color: "#2c3e50",
+    color: "var(--text-main)",
     fontWeight: "700",
   },
   profileStatus: {
@@ -357,22 +375,33 @@ const styles = {
   },
   link: {
     textDecoration: "none",
-    color: "#667eea",
+    color: "#3b82f6",
     fontWeight: "600",
+  },
+  detailLine: {
+    color: "var(--text-main)",
+    margin: "0 0 6px 0",
+  },
+  detailKey: {
+    color: "var(--text-main)",
+  },
+  detailValue: {
+    color: "var(--text-main)",
   },
   rulesText: {
     fontStyle: "italic",
-    color: "#555",
+    color: "var(--text-muted)",
   },
   documentsSection: {
     marginTop: "20px",
     padding: "15px",
-    backgroundColor: "#f8f9fa",
+    backgroundColor: "var(--surface-muted)",
+    border: "1px solid var(--border-color)",
     borderRadius: "10px",
   },
   documentsTitle: {
     margin: "0 0 10px 0",
-    color: "#2c3e50",
+    color: "var(--text-main)",
     fontWeight: "700",
   },
   documentsGrid: {
@@ -382,12 +411,12 @@ const styles = {
   },
   docLink: {
     padding: "5px 10px",
-    backgroundColor: "#e9ecef",
+    backgroundColor: "var(--surface-card)",
     borderRadius: "5px",
     textDecoration: "none",
-    color: "#495057",
+    color: "var(--text-main)",
     fontSize: "12px",
-    border: "1px solid #ced4da",
+    border: "1px solid var(--border-color)",
   },
   actionButton: {
     flex: 1,
@@ -408,19 +437,19 @@ const styles = {
   finalMessage: {
     width: "100%",
     textAlign: "center",
-    color: "#666",
+    color: "var(--text-muted)",
     fontStyle: "italic",
   },
   timelineWrap: {
     marginTop: "14px",
-    border: "1px solid #e5e9f3",
+    border: "1px solid var(--border-color)",
     borderRadius: "10px",
     padding: "10px",
-    background: "#fafcff",
+    background: "var(--surface-muted)",
   },
   timelineTitle: {
     margin: "0 0 8px 0",
-    color: "#33415c",
+    color: "var(--text-main)",
   },
   timeline: {
     display: "grid",
@@ -445,7 +474,7 @@ const styles = {
   },
   timelineLabel: {
     fontSize: "12px",
-    color: "#475569",
+    color: "var(--text-main)",
     fontWeight: 600,
   },
 };

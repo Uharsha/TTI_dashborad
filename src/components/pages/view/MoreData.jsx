@@ -17,7 +17,19 @@ function MoreData() {
   const role = state?.role;
   const page = state?.page;
 
-  if (!student) return <p>No data found</p>;
+  if (!student) {
+    return (
+      <main style={styles.pageWrap}>
+        <section style={styles.card}>
+          <h2 style={styles.title}>Student Full Details</h2>
+          <p style={styles.muted}>No data found for this profile.</p>
+          <button type="button" style={styles.ghostBtn} onClick={() => navigate(-1)}>
+            Go Back
+          </button>
+        </section>
+      </main>
+    );
+  }
 
   const handleHeadApprove = async () => {
     try {
@@ -64,35 +76,35 @@ function MoreData() {
   };
 
   return (
-    <div style={styles.pageWrap}>
-      <div style={styles.card}>
+    <main style={styles.pageWrap}>
+      <section style={styles.card}>
       <h2 style={styles.title}>Student Full Details</h2>
 
       <div style={styles.details}>
-        <p><b>ID:</b> {id}</p>
-        <p><b>Name:</b> {student.name}</p>
-        <p><b>Email:</b> {student.email}</p>
-        <p><b>Status:</b> {student.status}</p>
-        <p><b>NVDA Knowledge:</b> {student.ScreenReader || "N/A"}</p>
+        <div style={styles.detailRow}><span style={styles.detailKey}>ID</span><span style={styles.detailValue}>{id}</span></div>
+        <div style={styles.detailRow}><span style={styles.detailKey}>Name</span><span style={styles.detailValue}>{student.name}</span></div>
+        <div style={styles.detailRow}><span style={styles.detailKey}>Email</span><span style={styles.detailValue}>{student.email}</span></div>
+        <div style={styles.detailRow}><span style={styles.detailKey}>Status</span><span style={styles.detailValue}>{student.status}</span></div>
+        <div style={styles.detailRow}><span style={styles.detailKey}>NVDA Knowledge</span><span style={styles.detailValue}>{student.ScreenReader || "N/A"}</span></div>
       </div>
 
       {role === "HEAD" && page === "PENDING" && (
         <div style={styles.buttonRow}>
-          <button style={styles.primaryBtn} onClick={handleHeadApprove}>Head Approve</button>
+          <button type="button" style={styles.primaryBtn} onClick={handleHeadApprove}>Head Approve</button>
           {"  "}
-          <button style={styles.dangerBtn} onClick={handleHeadReject}>Head Reject</button>
+          <button type="button" style={styles.dangerBtn} onClick={handleHeadReject}>Head Reject</button>
         </div>
       )}
 
       {role === "TEACHER" && page === "HEAD_ACCEPTED" && (
         <div style={styles.buttonRow}>
-          <button style={styles.primaryBtn} onClick={handleTeacherApprove}>Teacher Approve</button>
+          <button type="button" style={styles.primaryBtn} onClick={handleTeacherApprove}>Teacher Approve</button>
           {"  "}
-          <button style={styles.dangerBtn} onClick={handleTeacherReject}>Teacher Reject</button>
+          <button type="button" style={styles.dangerBtn} onClick={handleTeacherReject}>Teacher Reject</button>
         </div>
       )}
-      </div>
-    </div>
+      </section>
+    </main>
   );
 }
 
@@ -105,12 +117,14 @@ const styles = {
     justifyContent: "center",
     alignItems: "flex-start",
     padding: "100px 16px 24px",
-    background: "#f6f8fc",
+    background: "var(--bg-page)",
   },
   card: {
     width: "100%",
     maxWidth: "760px",
-    background: "#fff",
+    background: "var(--surface-card)",
+    color: "var(--text-main)",
+    border: "1px solid var(--border-color)",
     borderRadius: "14px",
     boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
     padding: "24px",
@@ -118,12 +132,32 @@ const styles = {
   title: {
     textAlign: "center",
     margin: 0,
-    color: "#1f2a44",
+    color: "var(--text-main)",
+  },
+  muted: {
+    color: "var(--text-muted)",
+    marginTop: "10px",
+    marginBottom: "16px",
   },
   details: {
     marginTop: "20px",
-    lineHeight: 1.8,
-    color: "#2f3a55",
+    display: "grid",
+    gap: "10px",
+  },
+  detailRow: {
+    display: "grid",
+    gridTemplateColumns: "170px 1fr",
+    alignItems: "center",
+    borderBottom: "1px solid var(--border-color)",
+    paddingBottom: "8px",
+  },
+  detailKey: {
+    fontWeight: 700,
+    color: "var(--text-main)",
+  },
+  detailValue: {
+    margin: 0,
+    color: "var(--text-main)",
   },
   buttonRow: {
     marginTop: "28px",
@@ -149,6 +183,15 @@ const styles = {
     padding: "12px 18px",
     fontWeight: 700,
     minWidth: "160px",
+    cursor: "pointer",
+  },
+  ghostBtn: {
+    border: "1px solid var(--border-color)",
+    background: "var(--surface-card)",
+    color: "var(--text-main)",
+    borderRadius: "8px",
+    padding: "10px 14px",
+    fontWeight: 700,
     cursor: "pointer",
   },
 };

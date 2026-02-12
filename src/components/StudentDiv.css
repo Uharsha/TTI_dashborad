@@ -2,7 +2,7 @@
 .modalOverlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.7);
+  background: rgba(0, 0, 0, 0.65);
   display: flex;
   justify-content: center;
   align-items: flex-start;
@@ -12,7 +12,9 @@
 
 /* Modal Box */
 .modalContent {
-  background: #fff;
+  background: var(--surface-card);
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
   width: 100%;
   max-width: 750px;
   max-height: 90vh;
@@ -28,7 +30,7 @@
   display: flex;
   gap: 20px;
   align-items: center;
-  border-bottom: 2px solid #eee;
+  border-bottom: 1px solid var(--border-color);
   padding-bottom: 15px;
 }
 
@@ -47,14 +49,28 @@
   margin-top: 20px;
 }
 
+.detailsGrid p {
+  color: var(--text-main);
+}
+
+.detailsGrid strong {
+  color: var(--text-main);
+}
+
 /* Actions */
 .actionsSection {
   display: flex;
   gap: 14px;
   margin-top: 30px;
   padding-top: 18px;
-  border-top: 2px solid #eee;
+  border-top: 1px solid var(--border-color);
   flex-wrap: wrap;
+}
+
+.modalContent button:focus-visible,
+.modalContent a:focus-visible {
+  outline: 2px solid #60a5fa;
+  outline-offset: 2px;
 }
 
 /* 📱 MOBILE RESPONSIVE */
