@@ -1,23 +1,23 @@
 const COURSE_TEACHERS = {
   DBMS: {
-    name: "Dr. Rajesh Kumar",
-    email: "rajesh.kumar@tti-foundation.org",
+    name: "Ananya Rao",
+    email: "ananya.dbms.teacher@example.com",
   },
   CloudComputing: {
-    name: "Prof. Anjali Singh",
-    email: "anjali.singh@tti-foundation.org",
+    name: "Rohan Mehta",
+    email: "rohan.cloud.teacher@example.com",
   },
   Accessibility: {
-    name: "Dr. Priya Sharma",
-    email: "priya.sharma@tti-foundation.org",
+    name: "Sneha Verma",
+    email: "sneha.access.teacher@example.com",
   },
   BasicComputers: {
-    name: "Mr. Vikram Patel",
-    email: "vikram.patel@tti-foundation.org",
+    name: "Vikram Das",
+    email: "vikram.basic.teacher@example.com",
   },
   MachineLearning: {
-    name: "Dr. Arun Verma",
-    email: "arun.verma@tti-foundation.org",
+    name: "Ishita Nair",
+    email: "ishita.ml.teacher@example.com",
   },
 };
 
