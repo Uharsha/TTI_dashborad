@@ -4,7 +4,7 @@ const bcrypt = require("bcrypt");
 const transporter = require("../utils/mailer");
 
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
-const SENDER_EMAIL = process.env.EMAIL_USER;
+const SENDER_EMAIL = process.env.GMAIL_USER;
 
 const getRequesterFromToken = (req) => {
   const authHeader = req.headers.authorization || "";
