@@ -64,10 +64,11 @@ function MoreData() {
   };
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h2 style={{ textAlign: "center" }}>Student Full Details</h2>
+    <div style={styles.pageWrap}>
+      <div style={styles.card}>
+      <h2 style={styles.title}>Student Full Details</h2>
 
-      <div style={{ marginTop: "20px" }}>
+      <div style={styles.details}>
         <p><b>ID:</b> {id}</p>
         <p><b>Name:</b> {student.name}</p>
         <p><b>Email:</b> {student.email}</p>
@@ -76,22 +77,74 @@ function MoreData() {
       </div>
 
       {role === "HEAD" && page === "PENDING" && (
-        <div style={{ marginTop: "30px" }}>
-          <button onClick={handleHeadApprove}>Head Approve</button>
+        <div style={styles.buttonRow}>
+          <button style={styles.primaryBtn} onClick={handleHeadApprove}>Head Approve</button>
           {"  "}
-          <button onClick={handleHeadReject}>Head Reject</button>
+          <button style={styles.dangerBtn} onClick={handleHeadReject}>Head Reject</button>
         </div>
       )}
 
       {role === "TEACHER" && page === "HEAD_ACCEPTED" && (
-        <div style={{ marginTop: "30px" }}>
-          <button onClick={handleTeacherApprove}>Teacher Approve</button>
+        <div style={styles.buttonRow}>
+          <button style={styles.primaryBtn} onClick={handleTeacherApprove}>Teacher Approve</button>
           {"  "}
-          <button onClick={handleTeacherReject}>Teacher Reject</button>
+          <button style={styles.dangerBtn} onClick={handleTeacherReject}>Teacher Reject</button>
         </div>
       )}
+      </div>
     </div>
   );
 }
 
 export default MoreData;
+
+const styles = {
+  pageWrap: {
+    minHeight: "100vh",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "flex-start",
+    padding: "56px 16px 24px",
+    background: "#f6f8fc",
+  },
+  card: {
+    width: "100%",
+    maxWidth: "760px",
+    background: "#fff",
+    borderRadius: "14px",
+    boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
+    padding: "24px",
+  },
+  title: {
+    textAlign: "center",
+    margin: 0,
+    color: "#1f2a44",
+  },
+  details: {
+    marginTop: "20px",
+    lineHeight: 1.8,
+    color: "#2f3a55",
+  },
+  buttonRow: {
+    marginTop: "28px",
+    display: "flex",
+    gap: "10px",
+    flexWrap: "wrap",
+  },
+  primaryBtn: {
+    border: "none",
+    background: "#2f80ed",
+    color: "#fff",
+    borderRadius: "8px",
+    padding: "10px 14px",
+    cursor: "pointer",
+  },
+  dangerBtn: {
+    border: "none",
+    background: "#d63031",
+    color: "#fff",
+    borderRadius: "8px",
+    padding: "10px 14px",
+    cursor: "pointer",
+  },
+};
