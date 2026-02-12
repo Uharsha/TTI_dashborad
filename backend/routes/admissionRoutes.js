@@ -89,7 +89,7 @@ Thank you for applying to the <b>TTI Foundation</b>.<br>
 We are pleased to inform you that your admission application has been <b>successfully submitted</b>. Our team will review your application, and you will be notified about the next steps via email.<br>
 
 Please ensure that you regularly check your email for updates regarding your application status.<br><br>
-if you have any questions or need further assistance, feel free to contact us at <a href="tel:${process.env.CONTACT_NUMBER}">${process.env.CONTACT_NUMBER}</a> <br><br>
+
 Warm regards,<br>
 <b>TTI Foundation – Admissions Team</b><br><br>
 <p style="font-size:12px;color:#666;">
