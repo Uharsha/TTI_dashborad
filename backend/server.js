@@ -12,26 +12,42 @@ const authRoutes = require("./routes/authRoutes");
 // Initialize Express
 const app = express();
 
-const allowedOrigins = (
-  process.env.CORS_ORIGINS ||
-  [process.env.FRONTEND_URL, process.env.BASE_URL, "http://localhost:3000"].filter(Boolean).join(",")
-)
+const normalizeOrigin = (value = "") =>
+  String(value).trim().replace(/^['"]|['"]$/g, "").replace(/\/+$/, "");
+
+const envOrigins = String(process.env.CORS_ORIGINS || "")
   .split(",")
-  .map((origin) => origin.trim().replace(/\/+$/, ""))
+  .map(normalizeOrigin)
   .filter(Boolean);
 
+const defaultOrigins = [
+  process.env.FRONTEND_URL,
+  process.env.BASE_URL,
+  "https://tti-dashborad-99d7.vercel.app",
+  "http://localhost:3000",
+  "http://localhost:3001",
+]
+  .map(normalizeOrigin)
+  .filter(Boolean);
+
+const allowedOrigins = [...new Set([...envOrigins, ...defaultOrigins])];
+
 // Middleware
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (!origin) return callback(null, true);
-      const normalized = origin.replace(/\/+$/, "");
-      if (allowedOrigins.includes(normalized)) return callback(null, true);
-      return callback(new Error("CORS not allowed"));
-    },
-    credentials: true,
-  })
-);
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    const normalized = normalizeOrigin(origin);
+    if (allowedOrigins.includes(normalized)) return callback(null, true);
+    // Return false instead of throwing to avoid 500 + missing CORS headers confusion.
+    return callback(null, false);
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
+
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
