@@ -17,6 +17,7 @@ const DASHBOARD_URL = normalizeUrl(
     "https://tti-dashborad-99d7.vercel.app"
 );
 const MAIL_FROM =
+  process.env.RESEND_FROM ||
   process.env.EMAIL_USER ||
   process.env.GMAIL_USER ||
   process.env.MAIL_USER ||
@@ -37,14 +38,14 @@ const createNotification = async ({ title, message, role = "ALL", course = null,
 
 const safeSendMail = async (mailOptions) => {
   try {
-    await mailer.sendMail({
+    const result = await mailer.sendMail({
       from: MAIL_FROM,
       ...mailOptions,
     });
-    return { success: true, error: null };
+    return { success: true, error: null, provider: result?.provider || null };
   } catch (err) {
     console.error("Mail send failed:", err.message);
-    return { success: false, error: err.message || "Unknown SMTP error" };
+    return { success: false, error: err.message || "Unknown mail error", provider: null };
   }
 };
 
@@ -59,10 +60,14 @@ router.post("/test-mail", auth, async (req, res) => {
     if (!to) {
       return res.status(400).json({ error: "Recipient email (to) is required" });
     }
-    if (!MAIL_FROM) {
+    const meta = mailer.getMailerMeta ? mailer.getMailerMeta() : null;
+    const providerAvailable =
+      meta ? meta.resendConfigured || meta.smtpConfigured : Boolean(MAIL_FROM);
+
+    if (!providerAvailable) {
       return res.status(500).json({
-        error: "Mail sender is not configured",
-        detail: "Set GMAIL_USER (or EMAIL_USER/SMTP_USER) and GMAIL_PASS in Render env",
+        error: "Mail provider is not configured",
+        detail: "Set RESEND_API_KEY or SMTP credentials (GMAIL_USER + GMAIL_PASS).",
       });
     }
 
@@ -86,6 +91,7 @@ router.post("/test-mail", auth, async (req, res) => {
       success: true,
       message: "Test email sent",
       sender: MAIL_FROM,
+      provider: result.provider || meta?.activePreference || "unknown",
     });
   } catch (err) {
     console.error("Test mail error:", err.message);
