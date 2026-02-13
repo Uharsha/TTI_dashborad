@@ -6,6 +6,7 @@ const cloudinary = require("cloudinary").v2;
 
 const Admission = require("../models/Admission");
 const Notification = require("../models/Notification");
+const ActivityLog = require("../models/ActivityLog");
 const mailer = require("../utils/mailer");
 const { sendSms } = require("../utils/sms");
 const COURSE_TEACHERS = require("../utils/teacher");
@@ -33,6 +34,33 @@ const createNotification = async ({ title, message, role = "ALL", course = null,
     await Notification.create({ title, message, role, course, userId, meta });
   } catch (err) {
     console.error("Notification create failed:", err.message);
+  }
+};
+
+const createActivityLog = async ({
+  action,
+  req = null,
+  admission = null,
+  note = "",
+  meta = {},
+  actorRole = "SYSTEM",
+  actorName = "",
+}) => {
+  try {
+    const actor = req?.user || {};
+    await ActivityLog.create({
+      action,
+      actorId: actor?.id || null,
+      actorRole: actor?.role || actorRole,
+      actorName: actor?.name || actor?.email || actorName,
+      admissionId: admission?._id || null,
+      candidateName: admission?.name || "",
+      candidateCourse: admission?.course || "",
+      note,
+      meta,
+    });
+  } catch (err) {
+    console.error("Activity log failed:", err.message);
   }
 };
 
@@ -163,6 +191,12 @@ router.post(
         message: `${user.name} applied for ${user.course}.`,
         role: "HEAD",
         meta: { admissionId: user._id, type: "ADMISSION_SUBMITTED" },
+      });
+      await createActivityLog({
+        action: "ADMISSION_SUBMITTED",
+        admission: user,
+        note: "New admission submitted by candidate.",
+        meta: { candidateEmail: user.email, candidateMobile: user.mobile },
       });
 
       const studentMail = await safeSendMail({
@@ -299,6 +333,12 @@ router.put("/head/approve/:id", auth, async (req, res) => {
       course: user.course,
       meta: { admissionId: user._id, type: "HEAD_APPROVED" },
     });
+    await createActivityLog({
+      action: "HEAD_APPROVED",
+      req,
+      admission: user,
+      note: "Candidate approved by HEAD.",
+    });
 
     /* 📧 MAIL ONLY TO TEACHER */
     await safeSendMail({
@@ -356,6 +396,12 @@ router.put("/head/reject/:id", auth, async (req, res) => {
       message: `${user.name} was rejected at head review stage.`,
       role: "HEAD",
       meta: { admissionId: user._id, type: "HEAD_REJECTED" },
+    });
+    await createActivityLog({
+      action: "HEAD_REJECTED",
+      req,
+      admission: user,
+      note: "Candidate rejected by HEAD.",
     });
 
     await safeSendMail({
@@ -422,6 +468,13 @@ router.put("/head/delete/:id", auth, async (req, res) => {
       role: "HEAD",
       meta: { admissionId: user._id, type: "HEAD_DELETED" },
     });
+    await createActivityLog({
+      action: "HEAD_DELETED",
+      req,
+      admission: user,
+      note: reason ? `Deleted with reason: ${reason}` : "Deleted without reason.",
+      meta: { reason },
+    });
 
     return res.json({ success: true, message: "Application deleted successfully." });
   } catch (err) {
@@ -457,6 +510,13 @@ router.post("/schedule-interview/:id", auth, async (req, res) => {
       message: `${updatedStudent.name}'s interview is scheduled on ${date} at ${time}.`,
       role: "HEAD",
       meta: { admissionId: updatedStudent._id, type: "INTERVIEW_SCHEDULED" },
+    });
+    await createActivityLog({
+      action: "INTERVIEW_SCHEDULED",
+      req,
+      admission: updatedStudent,
+      note: `Interview scheduled on ${date} at ${time}.`,
+      meta: { date, time, platform, link },
     });
 
     // 📧 Mail interview details to student
@@ -517,6 +577,12 @@ router.put("/final/approve/:id", auth, async (req, res) => {
       role: "HEAD",
       meta: { admissionId: user._id, type: "FINAL_SELECTED" },
     });
+    await createActivityLog({
+      action: "FINAL_SELECTED",
+      req,
+      admission: user,
+      note: "Candidate finally selected by TEACHER.",
+    });
 
     // 📧 Congratulations mail
     await safeSendMail({
@@ -572,6 +638,12 @@ router.put("/final/reject/:id", auth, async (req, res) => {
       message: `${user.name} was finally rejected by teacher for ${user.course}.`,
       role: "HEAD",
       meta: { admissionId: user._id, type: "FINAL_REJECTED" },
+    });
+    await createActivityLog({
+      action: "FINAL_REJECTED",
+      req,
+      admission: user,
+      note: "Candidate finally rejected by TEACHER.",
     });
 
     // 📧 Apology mail
@@ -713,6 +785,27 @@ router.get("/interview_required", auth, async (req, res) => {
   }
 
   res.json(await Admission.find(activeOnly(query)));
+});
+
+// AUDIT LOGS
+router.get("/audit-logs", auth, async (req, res) => {
+  try {
+    const role = String(req.user.role || "").toUpperCase();
+    const limit = Math.min(parsePositiveInt(req.query?.limit, 100), 300);
+    const query = {};
+    if (role === "TEACHER") {
+      query.$or = [{ actorId: req.user.id }, { actorRole: "SYSTEM" }];
+    }
+
+    const logs = await ActivityLog.find(query)
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .lean();
+
+    return res.json({ success: true, logs, count: logs.length });
+  } catch (err) {
+    return res.status(500).json({ error: err.message || "Failed to fetch audit logs" });
+  }
 });
 
 /* ================== NOTIFICATIONS ================== */
