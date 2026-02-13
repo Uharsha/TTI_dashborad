@@ -17,6 +17,12 @@ function MoreData() {
   const role = state?.role;
   const page = state?.page;
   const safeText = (value) => String(value || "").trim();
+  const toWhatsAppUrl = (value) => {
+    const digits = safeText(value).replace(/\D/g, "");
+    if (!digits) return "#";
+    const withCountry = digits.length === 10 ? `91${digits}` : digits;
+    return `https://wa.me/${withCountry}`;
+  };
 
   if (!student) {
     return (
@@ -90,7 +96,7 @@ function MoreData() {
         </div>
         <div style={styles.detailRow}>
           <span style={styles.detailKey}>Mobile</span>
-          <a style={styles.link} href={`tel:${safeText(student.mobile)}`}>{safeText(student.mobile)}</a>
+          <a style={styles.link} href={toWhatsAppUrl(student.mobile)} target="_blank" rel="noreferrer">{safeText(student.mobile)}</a>
         </div>
         <div style={styles.detailRow}><span style={styles.detailKey}>Status</span><span style={styles.detailValue}>{student.status}</span></div>
         <div style={styles.detailRow}><span style={styles.detailKey}>NVDA Knowledge</span><span style={styles.detailValue}>{student.ScreenReader || "N/A"}</span></div>

@@ -17,6 +17,12 @@ function StudentTable({ students, refresh, enableSelection = false, selectedIds 
   const role = localStorage.getItem("role");
   const toast = useToast();
   const safeText = (value) => String(value || "").trim();
+  const toWhatsAppUrl = (value) => {
+    const digits = safeText(value).replace(/\D/g, "");
+    if (!digits) return "#";
+    const withCountry = digits.length === 10 ? `91${digits}` : digits;
+    return `https://wa.me/${withCountry}`;
+  };
 
   useEffect(() => {
     if (!selectedStudent) return undefined;
@@ -164,7 +170,7 @@ function StudentTable({ students, refresh, enableSelection = false, selectedIds 
                 </p>
                 <p style={styles.detailLine}>
                   <strong style={styles.detailKey}>Mobile:</strong>{" "}
-                  <a href={`tel:${safeText(selectedStudent.mobile)}`} style={styles.link}>
+                  <a href={toWhatsAppUrl(selectedStudent.mobile)} target="_blank" rel="noreferrer" style={styles.link}>
                     {safeText(selectedStudent.mobile)}
                   </a>
                 </p>
