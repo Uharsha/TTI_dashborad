@@ -229,7 +229,12 @@ This is an automatically generated email. Replies to this message are not monito
         }
       }
 
-      const headPhone = String(process.env.CONTACT_NUMBER || process.env.HEAD_MOBILE || "").trim();
+      const headPhone = String(
+        process.env.HEAD_PHONE ||
+        process.env.HEAD_MOBILE ||
+        process.env.CONTACT_NUMBER ||
+        ""
+      ).trim();
       if (headPhone) {
         await sendSms({
           to: headPhone,
