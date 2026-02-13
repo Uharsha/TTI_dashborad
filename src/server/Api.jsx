@@ -2,7 +2,7 @@ import axios from "axios";
 
 /* ================= AXIOS INSTANCE ================= */
 
-const API_BASE = (process.env.REACT_APP_API_BASE || "https://tti-dashborad.onrender.com").replace(/\/+$/, "");
+const API_BASE = (process.env.REACT_APP_API_BASE || "https://tti-dashboard.onrender.com").replace(/\/+$/, "");
 
 const API = axios.create({
   baseURL: `${API_BASE}/admission`,

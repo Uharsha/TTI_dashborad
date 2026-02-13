@@ -229,14 +229,14 @@ This is an automatically generated email. Replies to this message are not monito
         }
       }
 
-      const headPhone = String(process.env.HEAD_PHONE || process.env.HEAD_MOBILE || "").trim();
+      const headPhone = String(process.env.CONTACT_NUMBER || process.env.HEAD_MOBILE || "").trim();
       if (headPhone) {
         await sendSms({
           to: headPhone,
           body: `TTI: New admission from ${user.name} for ${user.course}.`,
         }).catch((err) => console.error("SMS send failed:", err.message));
       }
-
+      
       const message = warnings.length
         ? "Admission submitted, but some notifications failed."
         : "Admission submitted successfully!";
