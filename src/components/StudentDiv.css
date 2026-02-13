@@ -65,8 +65,8 @@
 .actionsSection {
   display: flex;
   gap: 14px;
-  margin-top: 30px;
-  padding-top: 18px;
+  margin-top: 16px;
+  padding-top: 12px;
   border-top: 1px solid var(--border-color);
   flex-wrap: wrap;
 }
