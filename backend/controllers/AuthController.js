@@ -10,6 +10,7 @@ const FRONTEND_URL = normalizeUrl(
     "https://tti-dashborad-99d7.vercel.app"
 );
 const SENDER_EMAIL =
+  process.env.RESEND_FROM ||
   process.env.EMAIL_USER ||
   process.env.GMAIL_USER ||
   process.env.MAIL_USER ||
@@ -176,16 +177,24 @@ const forgotPassword = async (req, res) => {
 
     const resetUrl = `${FRONTEND_URL}/auth?mode=reset&token=${encodeURIComponent(token)}`;
 
-    if (!SENDER_EMAIL) {
+    const meta = mailer.getMailerMeta ? mailer.getMailerMeta() : null;
+    const providerAvailable =
+      meta ? meta.resendConfigured || meta.smtpConfigured : Boolean(SENDER_EMAIL);
+    if (!providerAvailable) {
       return res.status(500).json({
-        error: "Email sender is not configured on server.",
-        detail: "Set GMAIL_USER and GMAIL_PASS (or EMAIL_USER and EMAIL_PASS) in backend environment variables.",
+        error: "Mail provider is not configured on server.",
+        detail: "Set RESEND_API_KEY or SMTP credentials (GMAIL_USER + GMAIL_PASS) in backend environment variables.",
       });
     }
+    const sender =
+      cleanSender(SENDER_EMAIL) ||
+      cleanSender(meta?.resendFrom) ||
+      cleanSender(meta?.smtpUser) ||
+      undefined;
 
     try {
       await mailer.sendMail({
-        from: SENDER_EMAIL,
+        from: sender,
         to: user.email,
         subject: "Reset your password - TTI Dashboard",
         html: `
@@ -211,6 +220,8 @@ const forgotPassword = async (req, res) => {
     return res.status(500).json({ error: err.message });
   }
 };
+
+const cleanSender = (value) => String(value || "").trim();
 
 const resetPassword = async (req, res) => {
   try {
