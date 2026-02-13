@@ -16,6 +16,7 @@ function MoreData() {
   const student = state?.student;
   const role = state?.role;
   const page = state?.page;
+  const safeText = (value) => String(value || "").trim();
 
   if (!student) {
     return (
@@ -83,7 +84,14 @@ function MoreData() {
       <div style={styles.details}>
         <div style={styles.detailRow}><span style={styles.detailKey}>ID</span><span style={styles.detailValue}>{id}</span></div>
         <div style={styles.detailRow}><span style={styles.detailKey}>Name</span><span style={styles.detailValue}>{student.name}</span></div>
-        <div style={styles.detailRow}><span style={styles.detailKey}>Email</span><span style={styles.detailValue}>{student.email}</span></div>
+        <div style={styles.detailRow}>
+          <span style={styles.detailKey}>Email</span>
+          <a style={styles.link} href={`mailto:${safeText(student.email)}`}>{safeText(student.email)}</a>
+        </div>
+        <div style={styles.detailRow}>
+          <span style={styles.detailKey}>Mobile</span>
+          <a style={styles.link} href={`tel:${safeText(student.mobile)}`}>{safeText(student.mobile)}</a>
+        </div>
         <div style={styles.detailRow}><span style={styles.detailKey}>Status</span><span style={styles.detailValue}>{student.status}</span></div>
         <div style={styles.detailRow}><span style={styles.detailKey}>NVDA Knowledge</span><span style={styles.detailValue}>{student.ScreenReader || "N/A"}</span></div>
       </div>
@@ -158,6 +166,12 @@ const styles = {
   detailValue: {
     margin: 0,
     color: "var(--text-main)",
+  },
+  link: {
+    color: "#3b82f6",
+    fontWeight: 700,
+    textDecoration: "none",
+    overflowWrap: "anywhere",
   },
   buttonRow: {
     marginTop: "28px",

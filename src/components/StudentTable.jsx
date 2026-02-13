@@ -16,6 +16,7 @@ function StudentTable({ students, refresh, enableSelection = false, selectedIds 
   const [actionKey, setActionKey] = useState("");
   const role = localStorage.getItem("role");
   const toast = useToast();
+  const safeText = (value) => String(value || "").trim();
 
   useEffect(() => {
     if (!selectedStudent) return undefined;
@@ -157,14 +158,14 @@ function StudentTable({ students, refresh, enableSelection = false, selectedIds 
               <div>
                 <p style={styles.detailLine}>
                   <strong style={styles.detailKey}>Email:</strong>{" "}
-                  <a href={`mailto:${selectedStudent.email}`} style={styles.link}>
-                    {selectedStudent.email}
+                  <a href={`mailto:${safeText(selectedStudent.email)}`} style={styles.link}>
+                    {safeText(selectedStudent.email)}
                   </a>
                 </p>
                 <p style={styles.detailLine}>
                   <strong style={styles.detailKey}>Mobile:</strong>{" "}
-                  <a href={`tel:${selectedStudent.mobile}`} style={styles.link}>
-                    {selectedStudent.mobile}
+                  <a href={`tel:${safeText(selectedStudent.mobile)}`} style={styles.link}>
+                    {safeText(selectedStudent.mobile)}
                   </a>
                 </p>
                 <p style={styles.detailLine}><strong style={styles.detailKey}>DOB:</strong> <span style={styles.detailValue}>{new Date(selectedStudent.dob).toLocaleDateString()}</span></p>
