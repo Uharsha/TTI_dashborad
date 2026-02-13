@@ -360,13 +360,13 @@ const styles = {
     right: "20px",
     border: "none",
     background: "transparent",
-    color: "var(--text-main)",
+    color: "var(--modal-text)",
     fontSize: "24px",
     cursor: "pointer",
   },
   profileName: {
     margin: 0,
-    color: "var(--text-main)",
+    color: "var(--modal-text)",
     fontWeight: "700",
   },
   profileStatus: {
@@ -375,33 +375,33 @@ const styles = {
   },
   link: {
     textDecoration: "none",
-    color: "#3b82f6",
+    color: "var(--modal-link)",
     fontWeight: "600",
   },
   detailLine: {
-    color: "var(--text-main)",
+    color: "var(--modal-text)",
     margin: "0 0 6px 0",
   },
   detailKey: {
-    color: "var(--text-main)",
+    color: "var(--modal-text)",
   },
   detailValue: {
-    color: "var(--text-main)",
+    color: "var(--modal-text)",
   },
   rulesText: {
     fontStyle: "italic",
-    color: "var(--text-muted)",
+    color: "var(--modal-muted)",
   },
   documentsSection: {
     marginTop: "20px",
     padding: "15px",
-    backgroundColor: "var(--surface-muted)",
+    backgroundColor: "var(--modal-surface-muted)",
     border: "1px solid var(--border-color)",
     borderRadius: "10px",
   },
   documentsTitle: {
     margin: "0 0 10px 0",
-    color: "var(--text-main)",
+    color: "var(--modal-text)",
     fontWeight: "700",
   },
   documentsGrid: {
@@ -411,10 +411,10 @@ const styles = {
   },
   docLink: {
     padding: "5px 10px",
-    backgroundColor: "var(--surface-card)",
+    backgroundColor: "var(--modal-surface)",
     borderRadius: "5px",
     textDecoration: "none",
-    color: "var(--text-main)",
+    color: "var(--modal-text)",
     fontSize: "12px",
     border: "1px solid var(--border-color)",
   },
@@ -437,7 +437,7 @@ const styles = {
   finalMessage: {
     width: "100%",
     textAlign: "center",
-    color: "var(--text-muted)",
+    color: "var(--modal-muted)",
     fontStyle: "italic",
   },
   timelineWrap: {
@@ -445,11 +445,11 @@ const styles = {
     border: "1px solid var(--border-color)",
     borderRadius: "10px",
     padding: "10px",
-    background: "var(--surface-muted)",
+    background: "var(--modal-surface-muted)",
   },
   timelineTitle: {
     margin: "0 0 8px 0",
-    color: "var(--text-main)",
+    color: "var(--modal-text)",
   },
   timeline: {
     display: "grid",
@@ -474,7 +474,7 @@ const styles = {
   },
   timelineLabel: {
     fontSize: "12px",
-    color: "var(--text-main)",
+    color: "var(--modal-text)",
     fontWeight: 600,
   },
 };

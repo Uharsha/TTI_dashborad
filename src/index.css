@@ -5,6 +5,11 @@
   --surface-card: #ffffff;
   --surface-muted: #eef2ff;
   --border-color: #d7dff5;
+  --modal-text: #0f172a;
+  --modal-muted: #475569;
+  --modal-link: #1d4ed8;
+  --modal-surface: #ffffff;
+  --modal-surface-muted: #f8fafc;
 }
 
 [data-theme="dark"] {
@@ -14,6 +19,11 @@
   --surface-card: #1f2937;
   --surface-muted: #243145;
   --border-color: #324156;
+  --modal-text: #f8fafc;
+  --modal-muted: #cbd5e1;
+  --modal-link: #93c5fd;
+  --modal-surface: #0f172a;
+  --modal-surface-muted: #1e293b;
 }
 
 @keyframes pulse {

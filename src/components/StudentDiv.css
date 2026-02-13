@@ -12,8 +12,8 @@
 
 /* Modal Box */
 .modalContent {
-  background: var(--surface-card);
-  color: var(--text-main);
+  background: var(--modal-surface);
+  color: var(--modal-text);
   border: 1px solid var(--border-color);
   width: 100%;
   max-width: 750px;
@@ -50,11 +50,15 @@
 }
 
 .detailsGrid p {
-  color: var(--text-main);
+  color: var(--modal-text);
 }
 
 .detailsGrid strong {
-  color: var(--text-main);
+  color: var(--modal-text);
+}
+
+.detailsGrid a {
+  color: var(--modal-link);
 }
 
 /* Actions */
