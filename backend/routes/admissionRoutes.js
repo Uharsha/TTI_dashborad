@@ -108,12 +108,10 @@ router.post(
   ]),
   async (req, res) => {
     try {
-      // 1. Check if files exist at all to prevent crash
       if (!req.files || Object.keys(req.files).length === 0) {
         return res.status(400).json({ error: "No files were uploaded. Please attach all required documents." });
       }
 
-      // 2. Safely extract paths using optional chaining
       const admissionData = {
         ...req.body,
         course: req.body.course ? req.body.course.trim() : null,
@@ -126,13 +124,14 @@ router.post(
         doctor: req.files["doctor"]?.[0]?.path || null,
       };
 
-      // 3. Simple validation: Ensure core files are present
       if (!admissionData.passport_photo || !admissionData.adhar || !admissionData.disability || !admissionData.UDID || !admissionData.Degree_memo || !admissionData.doctor) {
         return res.status(400).json({ error: "Passport Photo, Adhar, Disability, Degree Memo, and Doctor's Certificate are mandatory." });
       }
 
       const admission = new Admission(admissionData);
       const user = await admission.save();
+      const mailStatus = { student: false, head: false };
+      const warnings = [];
 
       await createNotification({
         title: "New Admission Submitted",
@@ -141,10 +140,9 @@ router.post(
         meta: { admissionId: user._id, type: "ADMISSION_SUBMITTED" },
       });
 
-      /* 📧 MAIL TO STUDENT */
-      await safeSendMail({
+      mailStatus.student = await safeSendMail({
         to: user.email,
-        subject: "Admission Submitted – TTI",
+        subject: "Admission Submitted - TTI",
         html: `Dear ${user.name}, <br> <br>
 
 Thank you for applying to the <b>TTI Foundation</b>.<br>
@@ -154,21 +152,24 @@ We are pleased to inform you that your admission application has been <b>success
 Please ensure that you regularly check your email for updates regarding your application status.<br><br>
 
 Warm regards,<br>
-<b>TTI Foundation – Admissions Team</b><br><br>
+<b>TTI Foundation - Admissions Team</b><br><br>
 <p style="font-size:12px;color:#666;">
 This is an automatically generated email. Replies to this message are not monitored.
 </p>
 `,
       });
+      if (!mailStatus.student) {
+        warnings.push("Student confirmation email was not sent.");
+      }
 
-      /* 📧 MAIL TO HEAD */
       if (!process.env.HEAD_EMAIL) {
         console.error("HEAD_EMAIL is not configured; skipping head notification email.");
+        warnings.push("Head notification email skipped (HEAD_EMAIL not configured).");
       } else {
-      await safeSendMail({
-        to: process.env.HEAD_EMAIL,
-        subject: "New Admission Request",
-        html: `
+        mailStatus.head = await safeSendMail({
+          to: process.env.HEAD_EMAIL,
+          subject: "New Admission Request",
+          html: `
          Dear Sir/Madam,<br>
 
 A new admission application has been submitted and requires your review.<br><br>
@@ -187,16 +188,18 @@ Please log in to the admin dashboard to review and take the necessary action.<br
 Dashboard: <a href="${DASHBOARD_URL}" target="_blank">${DASHBOARD_URL}</a><br><br>
 
 Regards,<br>
-<b>TTI Foundation – Admission System</b><br>
+<b>TTI Foundation - Admission System</b><br>
 <p style="font-size:12px;color:#666;">
 This is an automatically generated email. Replies to this message are not monitored.
 </p>
 
         `,
-      });
+        });
+        if (!mailStatus.head) {
+          warnings.push("Head notification email was not sent.");
+        }
       }
 
-      // Optional SMS hook (Twilio). Works when TWILIO_* vars are set.
       const headPhone = String(process.env.HEAD_PHONE || process.env.HEAD_MOBILE || "").trim();
       if (headPhone) {
         await sendSms({
@@ -205,14 +208,24 @@ This is an automatically generated email. Replies to this message are not monito
         }).catch((err) => console.error("SMS send failed:", err.message));
       }
 
-      res.status(201).json({ success: true, message: "Admission submitted successfully!" });
+      const message = warnings.length
+        ? "Admission submitted, but some notifications failed."
+        : "Admission submitted successfully!";
+
+      return res.status(201).json({
+        success: true,
+        message,
+        admissionId: user._id,
+        mailStatus,
+        warnings,
+      });
 
     } catch (err) {
       if (err && err.code === 11000) {
         return res.status(409).json({ error: "You have already submitted the form with this email or mobile." });
       }
       console.error("saveAdmission failed:", err);
-      res.status(500).json({ error: err.message || "Internal server error" });
+      return res.status(500).json({ error: err.message || "Internal server error" });
     }
   }
 );
