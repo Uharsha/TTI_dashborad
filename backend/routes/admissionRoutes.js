@@ -41,10 +41,10 @@ const safeSendMail = async (mailOptions) => {
       from: MAIL_FROM,
       ...mailOptions,
     });
-    return true;
+    return { success: true, error: null };
   } catch (err) {
     console.error("Mail send failed:", err.message);
-    return false;
+    return { success: false, error: err.message || "Unknown SMTP error" };
   }
 };
 
@@ -59,8 +59,14 @@ router.post("/test-mail", auth, async (req, res) => {
     if (!to) {
       return res.status(400).json({ error: "Recipient email (to) is required" });
     }
+    if (!MAIL_FROM) {
+      return res.status(500).json({
+        error: "Mail sender is not configured",
+        detail: "Set GMAIL_USER (or EMAIL_USER/SMTP_USER) and GMAIL_PASS in Render env",
+      });
+    }
 
-    await mailer.sendMail({
+    const result = await safeSendMail({
       from: MAIL_FROM,
       to,
       subject: subject || "Test email - TTI",
@@ -68,7 +74,19 @@ router.post("/test-mail", auth, async (req, res) => {
       text: text || "Resend test mail from TTI backend.",
     });
 
-    return res.json({ success: true, message: "Test email sent" });
+    if (!result.success) {
+      return res.status(500).json({
+        success: false,
+        error: "Test email failed",
+        detail: result.error,
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: "Test email sent",
+      sender: MAIL_FROM,
+    });
   } catch (err) {
     console.error("Test mail error:", err.message);
     return res.status(500).json({ error: "Test email failed", detail: err.message });
@@ -131,6 +149,7 @@ router.post(
       const admission = new Admission(admissionData);
       const user = await admission.save();
       const mailStatus = { student: false, head: false };
+      const mailErrors = { student: null, head: null };
       const warnings = [];
 
       await createNotification({
@@ -140,7 +159,7 @@ router.post(
         meta: { admissionId: user._id, type: "ADMISSION_SUBMITTED" },
       });
 
-      mailStatus.student = await safeSendMail({
+      const studentMail = await safeSendMail({
         to: user.email,
         subject: "Admission Submitted - TTI",
         html: `Dear ${user.name}, <br> <br>
@@ -158,7 +177,9 @@ This is an automatically generated email. Replies to this message are not monito
 </p>
 `,
       });
-      if (!mailStatus.student) {
+      mailStatus.student = studentMail.success;
+      mailErrors.student = studentMail.error;
+      if (!studentMail.success) {
         warnings.push("Student confirmation email was not sent.");
       }
 
@@ -166,7 +187,7 @@ This is an automatically generated email. Replies to this message are not monito
         console.error("HEAD_EMAIL is not configured; skipping head notification email.");
         warnings.push("Head notification email skipped (HEAD_EMAIL not configured).");
       } else {
-        mailStatus.head = await safeSendMail({
+        const headMail = await safeSendMail({
           to: process.env.HEAD_EMAIL,
           subject: "New Admission Request",
           html: `
@@ -195,7 +216,9 @@ This is an automatically generated email. Replies to this message are not monito
 
         `,
         });
-        if (!mailStatus.head) {
+        mailStatus.head = headMail.success;
+        mailErrors.head = headMail.error;
+        if (!headMail.success) {
           warnings.push("Head notification email was not sent.");
         }
       }
@@ -217,6 +240,7 @@ This is an automatically generated email. Replies to this message are not monito
         message,
         admissionId: user._id,
         mailStatus,
+        mailErrors,
         warnings,
       });
 
