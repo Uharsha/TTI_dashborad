@@ -166,7 +166,11 @@ function Navbar() {
                 aria-expanded={mobileMenuOpen}
                 aria-controls="mobile-menu-drawer"
               >
-                Menu
+                <span className="hamburger-lines" aria-hidden="true">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </span>
               </button>
 
               <div className="nav-links desktop-links">

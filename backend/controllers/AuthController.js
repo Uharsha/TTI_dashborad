@@ -181,6 +181,14 @@ const forgotPassword = async (req, res) => {
     const providerAvailable =
       meta ? meta.resendConfigured || meta.smtpConfigured : Boolean(SENDER_EMAIL);
     if (!providerAvailable) {
+      const isProduction = String(process.env.NODE_ENV || "").toLowerCase() === "production";
+      if (!isProduction) {
+        return res.json({
+          success: true,
+          message: "Mail provider is not configured. Use reset link from response in local/dev.",
+          resetUrl,
+        });
+      }
       return res.status(500).json({
         error: "Mail provider is not configured on server.",
         detail: "Set RESEND_API_KEY or SMTP credentials (GMAIL_USER + GMAIL_PASS) in backend environment variables.",

@@ -3,6 +3,11 @@ const router = express.Router();
 const multer = require("multer");
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
 const cloudinary = require("cloudinary").v2;
+const dns = require("dns");
+
+if (typeof dns.setDefaultResultOrder === "function") {
+  dns.setDefaultResultOrder("ipv4first");
+}
 
 const Admission = require("../models/Admission");
 const Notification = require("../models/Notification");
@@ -17,12 +22,28 @@ const DASHBOARD_URL = normalizeUrl(
     process.env.FRONTEND_URL ||
     "https://tti-dashborad-99d7.vercel.app"
 );
-const MAIL_FROM =
-  process.env.RESEND_FROM ||
-  process.env.EMAIL_USER ||
-  process.env.GMAIL_USER ||
-  process.env.MAIL_USER ||
-  process.env.SMTP_USER;
+const resolveMailFrom = () => {
+  const meta = mailer.getMailerMeta ? mailer.getMailerMeta() : null;
+  if (meta?.resendConfigured) {
+    return meta.resendFrom || process.env.RESEND_FROM || "TTI <onboarding@resend.dev>";
+  }
+  if (meta?.smtpConfigured) {
+    return (
+      meta.smtpUser ||
+      process.env.EMAIL_USER ||
+      process.env.GMAIL_USER ||
+      process.env.MAIL_USER ||
+      process.env.SMTP_USER
+    );
+  }
+  return (
+    process.env.RESEND_FROM ||
+    process.env.EMAIL_USER ||
+    process.env.GMAIL_USER ||
+    process.env.MAIL_USER ||
+    process.env.SMTP_USER
+  );
+};
 const activeOnly = (query = {}) => ({ isDeleted: { $ne: true }, ...query });
 const parsePositiveInt = (value, fallback) => {
   const parsed = Number.parseInt(value, 10);
@@ -66,10 +87,9 @@ const createActivityLog = async ({
 
 const safeSendMail = async (mailOptions) => {
   try {
-    const result = await mailer.sendMail({
-      from: MAIL_FROM,
-      ...mailOptions,
-    });
+    const from = resolveMailFrom();
+    const payload = from ? { from, ...mailOptions } : { ...mailOptions };
+    const result = await mailer.sendMail(payload);
     return { success: true, error: null, provider: result?.provider || null };
   } catch (err) {
     console.error("Mail send failed:", err.message);
@@ -89,8 +109,9 @@ router.post("/test-mail", auth, async (req, res) => {
       return res.status(400).json({ error: "Recipient email (to) is required" });
     }
     const meta = mailer.getMailerMeta ? mailer.getMailerMeta() : null;
+    const sender = resolveMailFrom();
     const providerAvailable =
-      meta ? meta.resendConfigured || meta.smtpConfigured : Boolean(MAIL_FROM);
+      meta ? meta.resendConfigured || meta.smtpConfigured : Boolean(sender);
 
     if (!providerAvailable) {
       return res.status(500).json({
@@ -100,7 +121,7 @@ router.post("/test-mail", auth, async (req, res) => {
     }
 
     const result = await safeSendMail({
-      from: MAIL_FROM,
+      from: sender,
       to,
       subject: subject || "Test email - TTI",
       html: html || "<p>Resend test mail from TTI backend.</p>",
@@ -118,7 +139,7 @@ router.post("/test-mail", auth, async (req, res) => {
     return res.json({
       success: true,
       message: "Test email sent",
-      sender: MAIL_FROM,
+      sender,
       provider: result.provider || meta?.activePreference || "unknown",
     });
   } catch (err) {
