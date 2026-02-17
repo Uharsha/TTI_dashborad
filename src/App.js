@@ -39,7 +39,7 @@
 // export default App;
 
 
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import RoleRoute from "./components/pages/RoleRoute";
 
@@ -85,13 +85,16 @@ function RejectedTeacherRedirect() {
   return <Navigate to="/teacher-dashboard/rejected-teacher" replace />;
 }
 
-function App() {
+function AppContent() {
+  const location = useLocation();
+  const hideNavbar = location.pathname === "/" || location.pathname === "/auth";
+
   return (
-    <BrowserRouter>
+    <>
       <a href="#main-content" className="skip-link">
         Skip to main content
       </a>
-      <Navbar />
+      {!hideNavbar && <Navbar />}
       <main id="main-content" tabIndex="-1">
         <Routes>
           <Route path="/" element={<AuthDashboard />} />
@@ -123,6 +126,14 @@ function App() {
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </main>
+    </>
+  );
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <AppContent />
     </BrowserRouter>
   );
 }
