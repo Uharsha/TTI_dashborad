@@ -135,7 +135,7 @@ export default function StudentList({ title, fetchFn }) {
       toast.success(`Bulk ${type}: ${ok} success${fail ? `, ${fail} failed` : ""}. Refreshing in 5 seconds...`);
       clearSelected();
       window.setTimeout(() => {
-        refresh();
+        window.location.reload();
       }, ACTION_REFRESH_DELAY_MS);
     } catch {
       toast.error("Bulk action failed.");

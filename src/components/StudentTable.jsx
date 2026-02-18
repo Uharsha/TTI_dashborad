@@ -49,7 +49,7 @@ function StudentTable({ students, refresh, enableSelection = false, selectedIds 
       setSelectedStudent(null);
       toast.success("Action completed. Refreshing in 5 seconds...");
       window.setTimeout(() => {
-        refresh();
+        window.location.reload();
       }, ACTION_REFRESH_DELAY_MS);
     } catch (err) {
       toast.error(err?.response?.data?.error || "Action failed.");
@@ -73,7 +73,7 @@ function StudentTable({ students, refresh, enableSelection = false, selectedIds 
       setSelectedStudent(null);
       toast.success("Application deleted. Refreshing in 5 seconds...");
       window.setTimeout(() => {
-        refresh();
+        window.location.reload();
       }, ACTION_REFRESH_DELAY_MS);
     } catch (err) {
       toast.error(err?.response?.data?.error || "Delete failed.");
