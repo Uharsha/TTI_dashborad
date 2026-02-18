@@ -10,6 +10,8 @@ import {
   teacherRejectStudent,
 } from "../server/Api";
 
+const ACTION_REFRESH_DELAY_MS = 5000;
+
 function StudentTable({ students, refresh, enableSelection = false, selectedIds = [], onToggleSelected = () => {} }) {
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
@@ -45,8 +47,10 @@ function StudentTable({ students, refresh, enableSelection = false, selectedIds 
     try {
       await actionFn(id);
       setSelectedStudent(null);
-      refresh();
-      toast.success("Action completed.");
+      toast.success("Action completed. Refreshing in 5 seconds...");
+      window.setTimeout(() => {
+        refresh();
+      }, ACTION_REFRESH_DELAY_MS);
     } catch (err) {
       toast.error(err?.response?.data?.error || "Action failed.");
     } finally {
@@ -67,8 +71,10 @@ function StudentTable({ students, refresh, enableSelection = false, selectedIds 
     try {
       await headDeleteStudent(student._id, reason);
       setSelectedStudent(null);
-      refresh();
-      toast.success("Application deleted.");
+      toast.success("Application deleted. Refreshing in 5 seconds...");
+      window.setTimeout(() => {
+        refresh();
+      }, ACTION_REFRESH_DELAY_MS);
     } catch (err) {
       toast.error(err?.response?.data?.error || "Delete failed.");
     } finally {

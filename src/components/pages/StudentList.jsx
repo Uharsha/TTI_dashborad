@@ -10,6 +10,7 @@ const ALL_COURSES = [
   "BasicComputers",
   "MachineLearning",
 ];
+const ACTION_REFRESH_DELAY_MS = 5000;
 
 export default function StudentList({ title, fetchFn }) {
   const [students, setStudents] = useState([]);
@@ -131,9 +132,11 @@ export default function StudentList({ title, fetchFn }) {
       const results = await Promise.allSettled(selectedIds.map((id) => apiFn(id)));
       const ok = results.filter((r) => r.status === "fulfilled").length;
       const fail = results.length - ok;
-      toast.success(`Bulk ${type}: ${ok} success${fail ? `, ${fail} failed` : ""}.`);
+      toast.success(`Bulk ${type}: ${ok} success${fail ? `, ${fail} failed` : ""}. Refreshing in 5 seconds...`);
       clearSelected();
-      refresh();
+      window.setTimeout(() => {
+        refresh();
+      }, ACTION_REFRESH_DELAY_MS);
     } catch {
       toast.error("Bulk action failed.");
     } finally {
