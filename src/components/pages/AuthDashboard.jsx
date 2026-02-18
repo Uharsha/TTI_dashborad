@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from "react";
+﻿import React, { useMemo, useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useToast } from "../ui/ToastContext";
 
@@ -11,7 +11,7 @@ const courseOptions = [
 ];
 
 const AuthDashboard = () => {
-  const API_BASE = (process.env.REACT_APP_API_BASE || "https://tti-dashboard.onrender.com").replace(/\/+$/, "");
+  const API_BASE = (process.env.REACT_APP_API_BASE || "http://localhost:5550").replace(/\/+$/, "");
   const navigate = useNavigate();
   const location = useLocation();
   const toast = useToast();
@@ -509,3 +509,4 @@ const styles = {
 };
 
 export default AuthDashboard;
+

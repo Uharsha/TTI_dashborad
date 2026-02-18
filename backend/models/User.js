@@ -15,6 +15,7 @@ const userSchema = new mongoose.Schema(
       enum: ["DBMS", "CloudComputing", "Accessibility", "BasicComputers", "MachineLearning"],
       default: null,
     },
+    expoPushTokens: { type: [String], default: [] },
   },
   { timestamps: true }
 );

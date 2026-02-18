@@ -1,8 +1,8 @@
-import axios from "axios";
+﻿import axios from "axios";
 
 /* ================= AXIOS INSTANCE ================= */
 
-const API_BASE = (process.env.REACT_APP_API_BASE || "https://tti-dashboard.onrender.com").replace(/\/+$/, "");
+const API_BASE = (process.env.REACT_APP_API_BASE || "http://localhost:5550").replace(/\/+$/, "");
 
 const API = axios.create({
   baseURL: `${API_BASE}/admission`,
@@ -79,3 +79,4 @@ export const teacherRejectStudent = (id) => API.put(`/final/reject/${id}`);
 /* ================= EXPORT ================= */
 
 export default API;
+

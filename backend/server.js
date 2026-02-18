@@ -73,7 +73,7 @@ app.use((err, req, res, next) => {
 });
 
 // Start Server
-const PORT = process.env.PORT || 5550;
+const PORT = process.env.PORT || 5500;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
   console.log(`📍 Health Check: http://localhost:${PORT}/health`);
