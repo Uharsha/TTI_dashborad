@@ -24,6 +24,8 @@ const defaultOrigins = [
   process.env.FRONTEND_URL,
   process.env.BASE_URL,
   "https://tti-dashborad-99d7.vercel.app",
+  "https://ttiadmission.vercel.app",
+  "https://tti-admission.vercel.app",
   "http://localhost:3000",
   "http://localhost:3001",
   "http://localhost:5173",
