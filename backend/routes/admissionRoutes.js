@@ -97,20 +97,6 @@ const safeSendMail = async (mailOptions) => {
   }
 };
 
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-// Retry once for transient SMTP/provider failures.
-const sendMandatoryMailWithRetry = async (mailOptions, attempts = 2) => {
-  let lastResult = { success: false, error: "Unknown mail error", provider: null };
-  for (let i = 0; i < attempts; i += 1) {
-    const result = await safeSendMail(mailOptions);
-    if (result.success) return result;
-    lastResult = result;
-    if (i < attempts - 1) await sleep(1200);
-  }
-  return lastResult;
-};
-
 // Simple admin-only test mail endpoint for verifying SMTP config
 router.post("/test-mail", auth, async (req, res) => {
   try {
@@ -235,8 +221,12 @@ router.post(
 
       const headEmail = String(process.env.HEAD_EMAIL || "").trim();
 
-      const [studentMail, headMail] = await Promise.all([
-        sendMandatoryMailWithRetry({
+      const mailFrom = resolveMailFrom();
+      const withSender = (options) => (mailFrom ? { from: mailFrom, ...options } : options);
+
+      const [studentMail, headMail] = await Promise.allSettled([
+        mailer.sendMail(
+          withSender({
           to: user.email,
           subject: "Admission Submitted - TTI",
           html: `Dear ${user.name}, <br> <br>
@@ -265,11 +255,14 @@ Warm regards,
 TTI Foundation - Admissions Team
 
 This is an automatically generated email. Replies are not monitored.`,
-        }),
-        sendMandatoryMailWithRetry({
-          to: headEmail,
-          subject: "New Admission Request",
-          html: `
+          })
+        ),
+        headEmail
+          ? mailer.sendMail(
+              withSender({
+                to: headEmail,
+                subject: "New Admission Request",
+                html: `
          Dear Sir/Madam,<br>
 
 A new admission application has been submitted and requires your review.<br><br>
@@ -294,7 +287,7 @@ This is an automatically generated email. Replies to this message are not monito
 </p>
 
         `,
-          text: `Dear Sir/Madam,
+                text: `Dear Sir/Madam,
 
 A new admission application has been submitted and requires your review.
 
@@ -310,32 +303,22 @@ Regards,
 TTI Foundation - Admission System
 
 This is an automatically generated email. Replies are not monitored.`,
-        }),
+              })
+            )
+          : Promise.reject(new Error("HEAD_EMAIL is not configured.")),
       ]);
 
-      mailStatus.student = studentMail.success;
-      mailErrors.student = studentMail.error;
-      mailStatus.head = headMail.success;
-      mailErrors.head = headMail.error;
+      mailStatus.student = studentMail.status === "fulfilled";
+      mailStatus.head = headMail.status === "fulfilled";
+      mailErrors.student =
+        studentMail.status === "rejected"
+          ? studentMail.reason?.message || "Failed to send candidate email."
+          : null;
+      mailErrors.head =
+        headMail.status === "rejected" ? headMail.reason?.message || "Failed to send head email." : null;
 
-      if (!headEmail || !mailStatus.student || !mailStatus.head) {
-        // Keep mail delivery mandatory, but rollback saved admission to avoid duplicate 409 on retry.
-        try {
-          await Admission.deleteOne({ _id: user._id });
-        } catch (rollbackErr) {
-          console.error("Admission rollback failed after mail failure:", rollbackErr.message);
-        }
-
-        return res.status(500).json({
-          success: false,
-          error: "Admission submission failed because mandatory emails were not delivered to both candidate and head.",
-          admissionId: user._id,
-          mailStatus,
-          mailErrors: {
-            ...mailErrors,
-            head: !headEmail ? "HEAD_EMAIL is not configured." : mailErrors.head,
-          },
-        });
+      if (!mailStatus.student || !mailStatus.head) {
+        console.error("Admission mail delivery failed:", mailErrors);
       }
 
       const headPhone = String(
@@ -357,6 +340,10 @@ This is an automatically generated email. Replies are not monitored.`,
         admissionId: user._id,
         mailStatus,
         mailErrors,
+        mailWarning:
+          !mailStatus.student || !mailStatus.head
+            ? "Admission saved, but one or more notification emails failed."
+            : null,
       });
 
     } catch (err) {
