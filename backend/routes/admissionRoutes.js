@@ -205,7 +205,6 @@ router.post(
       const user = await admission.save();
       const mailStatus = { student: false, head: false };
       const mailErrors = { student: null, head: null };
-      const warnings = [];
 
       await createNotification({
         title: "New Admission Submitted",
@@ -220,10 +219,13 @@ router.post(
         meta: { candidateEmail: user.email, candidateMobile: user.mobile },
       });
 
-      const studentMail = await safeSendMail({
-        to: user.email,
-        subject: "Admission Submitted - TTI",
-        html: `Dear ${user.name}, <br> <br>
+      const headEmail = String(process.env.HEAD_EMAIL || "").trim();
+
+      const [studentMail, headMail] = await Promise.all([
+        safeSendMail({
+          to: user.email,
+          subject: "Admission Submitted - TTI",
+          html: `Dear ${user.name}, <br> <br>
 
 Thank you for applying to the <b>TTI Foundation</b>.<br>
 
@@ -237,19 +239,21 @@ Warm regards,<br>
 This is an automatically generated email. Replies to this message are not monitored.
 </p>
 `,
-      });
-      mailStatus.student = studentMail.success;
-      mailErrors.student = studentMail.error;
-      if (!studentMail.success) {
-        warnings.push("Student confirmation email was not sent.");
-      }
+          text: `Dear ${user.name},
 
-      if (!process.env.HEAD_EMAIL) {
-        console.error("HEAD_EMAIL is not configured; skipping head notification email.");
-        warnings.push("Head notification email skipped (HEAD_EMAIL not configured).");
-      } else {
-        const headMail = await safeSendMail({
-          to: process.env.HEAD_EMAIL,
+Thank you for applying to TTI Foundation.
+
+Your admission application has been successfully submitted. Our team will review your application and notify you about the next steps by email.
+
+Please regularly check your email for updates.
+
+Warm regards,
+TTI Foundation - Admissions Team
+
+This is an automatically generated email. Replies are not monitored.`,
+        }),
+        safeSendMail({
+          to: headEmail,
           subject: "New Admission Request",
           html: `
          Dear Sir/Madam,<br>
@@ -276,12 +280,41 @@ This is an automatically generated email. Replies to this message are not monito
 </p>
 
         `,
+          text: `Dear Sir/Madam,
+
+A new admission application has been submitted and requires your review.
+
+Applicant Details:
+Name: ${user.name}
+Course Applied: ${user.course}
+Mobile: ${user.mobile}
+Photo: ${user.passport_photo}
+
+Dashboard: ${DASHBOARD_URL}
+
+Regards,
+TTI Foundation - Admission System
+
+This is an automatically generated email. Replies are not monitored.`,
+        }),
+      ]);
+
+      mailStatus.student = studentMail.success;
+      mailErrors.student = studentMail.error;
+      mailStatus.head = headMail.success;
+      mailErrors.head = headMail.error;
+
+      if (!headEmail || !mailStatus.student || !mailStatus.head) {
+        return res.status(500).json({
+          success: false,
+          error: "Admission saved, but mandatory emails were not delivered to both candidate and head.",
+          admissionId: user._id,
+          mailStatus,
+          mailErrors: {
+            ...mailErrors,
+            head: !headEmail ? "HEAD_EMAIL is not configured." : mailErrors.head,
+          },
         });
-        mailStatus.head = headMail.success;
-        mailErrors.head = headMail.error;
-        if (!headMail.success) {
-          warnings.push("Head notification email was not sent.");
-        }
       }
 
       const headPhone = String(
@@ -297,17 +330,12 @@ This is an automatically generated email. Replies to this message are not monito
         }).catch((err) => console.error("SMS send failed:", err.message));
       }
       
-      const message = warnings.length
-        ? "Admission submitted, but some notifications failed."
-        : "Admission submitted successfully!";
-
       return res.status(201).json({
         success: true,
-        message,
+        message: "Admission submitted successfully!",
         admissionId: user._id,
         mailStatus,
         mailErrors,
-        warnings,
       });
 
     } catch (err) {
