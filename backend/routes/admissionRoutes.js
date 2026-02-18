@@ -15,7 +15,7 @@ const ActivityLog = require("../models/ActivityLog");
 const mailer = require("../utils/mailer");
 const { sendSms } = require("../utils/sms");
 const COURSE_TEACHERS = require("../utils/teacher");
-const auth = require("../models/Middleware/Auth");
+const auth = require("../middleware/authMiddleware");
 const normalizeUrl = (value = "") => String(value).trim().replace(/\/+$/, "");
 const DASHBOARD_URL = normalizeUrl(
   process.env.DASHBOARD_URL ||

@@ -1,6 +1,7 @@
 const User = require("../models/User");
 
 const EXPO_PUSH_API = "https://exp.host/--/api/v2/push/send";
+const fetchFn = typeof fetch === "function" ? fetch.bind(globalThis) : null;
 
 const isExpoPushToken = (value = "") => /^ExponentPushToken\[[^\]]+\]$/.test(String(value).trim());
 
@@ -9,6 +10,7 @@ const uniqueTokens = (tokens = []) => [...new Set(tokens.map((t) => String(t || 
 const sendPushToTokens = async ({ tokens = [], title = "", body = "", data = {} }) => {
   const validTokens = uniqueTokens(tokens).filter(isExpoPushToken);
   if (!validTokens.length || !title || !body) return { sent: 0, receipts: [] };
+  if (!fetchFn) throw new Error("Global fetch is unavailable. Use Node.js 18+ for push notifications.");
 
   const messages = validTokens.map((to) => ({
     to,
@@ -19,7 +21,7 @@ const sendPushToTokens = async ({ tokens = [], title = "", body = "", data = {} 
     priority: "high",
   }));
 
-  const response = await fetch(EXPO_PUSH_API, {
+  const response = await fetchFn(EXPO_PUSH_API, {
     method: "POST",
     headers: {
       Accept: "application/json",

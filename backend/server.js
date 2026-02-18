@@ -22,6 +22,7 @@ const envOrigins = String(process.env.CORS_ORIGINS || "")
 
 const defaultOrigins = [
   process.env.FRONTEND_URL,
+  process.env.DASHBOARD_URL,
   process.env.BASE_URL,
   "https://tti-dashborad-99d7.vercel.app",
   "https://ttiadmission.vercel.app",
@@ -44,8 +45,8 @@ const corsOptions = {
     if (!origin) return callback(null, true);
     const normalized = normalizeOrigin(origin);
     if (allowedOrigins.includes(normalized)) return callback(null, true);
-    // Return false instead of throwing to avoid 500 + missing CORS headers confusion.
-    return callback(null, false);
+    console.warn(`CORS blocked origin: ${normalized}`);
+    return callback(new Error(`CORS blocked origin: ${normalized}`));
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
@@ -53,6 +54,7 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+app.options(/.*/, cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
@@ -70,6 +72,9 @@ app.get("/health", (req, res) => {
 
 // Error handling middleware
 app.use((err, req, res, next) => {
+  if (err?.message?.startsWith("CORS blocked origin:")) {
+    return res.status(403).json({ error: "CORS blocked", detail: err.message });
+  }
   console.error(err.stack);
   res.status(500).json({ error: "Internal Server Error", message: err.message });
 });

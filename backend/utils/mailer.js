@@ -27,6 +27,7 @@ const smtpPass = rawSmtpPass ? clean(rawSmtpPass).replace(/\s+/g, "") : "";
 
 const smtpConfigured = Boolean(smtpUser && smtpPass);
 const resendConfigured = Boolean(resendApiKey);
+const fetchFn = typeof fetch === "function" ? fetch.bind(globalThis) : null;
 
 if (!resendConfigured && !smtpConfigured) {
   console.warn("Mailer not configured: missing RESEND_API_KEY and SMTP credentials.");
@@ -53,6 +54,9 @@ const splitRecipients = (value) => {
 };
 
 const sendViaResend = async (options = {}) => {
+  if (!fetchFn) {
+    throw new Error("Global fetch is unavailable. Use Node.js 18+ or configure SMTP credentials.");
+  }
   const to = splitRecipients(options.to);
   if (!to.length) throw new Error("Resend: recipient email is required.");
 
@@ -64,7 +68,7 @@ const sendViaResend = async (options = {}) => {
   if (options.html) payload.html = options.html;
   if (options.text) payload.text = options.text;
 
-  const response = await fetch("https://api.resend.com/emails", {
+  const response = await fetchFn("https://api.resend.com/emails", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${resendApiKey}`,
