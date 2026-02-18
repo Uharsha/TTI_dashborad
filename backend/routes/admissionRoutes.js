@@ -97,6 +97,20 @@ const safeSendMail = async (mailOptions) => {
   }
 };
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// Retry once for transient SMTP/provider failures.
+const sendMandatoryMailWithRetry = async (mailOptions, attempts = 2) => {
+  let lastResult = { success: false, error: "Unknown mail error", provider: null };
+  for (let i = 0; i < attempts; i += 1) {
+    const result = await safeSendMail(mailOptions);
+    if (result.success) return result;
+    lastResult = result;
+    if (i < attempts - 1) await sleep(1200);
+  }
+  return lastResult;
+};
+
 // Simple admin-only test mail endpoint for verifying SMTP config
 router.post("/test-mail", auth, async (req, res) => {
   try {
@@ -222,7 +236,7 @@ router.post(
       const headEmail = String(process.env.HEAD_EMAIL || "").trim();
 
       const [studentMail, headMail] = await Promise.all([
-        safeSendMail({
+        sendMandatoryMailWithRetry({
           to: user.email,
           subject: "Admission Submitted - TTI",
           html: `Dear ${user.name}, <br> <br>
@@ -252,7 +266,7 @@ TTI Foundation - Admissions Team
 
 This is an automatically generated email. Replies are not monitored.`,
         }),
-        safeSendMail({
+        sendMandatoryMailWithRetry({
           to: headEmail,
           subject: "New Admission Request",
           html: `
@@ -305,9 +319,16 @@ This is an automatically generated email. Replies are not monitored.`,
       mailErrors.head = headMail.error;
 
       if (!headEmail || !mailStatus.student || !mailStatus.head) {
+        // Keep mail delivery mandatory, but rollback saved admission to avoid duplicate 409 on retry.
+        try {
+          await Admission.deleteOne({ _id: user._id });
+        } catch (rollbackErr) {
+          console.error("Admission rollback failed after mail failure:", rollbackErr.message);
+        }
+
         return res.status(500).json({
           success: false,
-          error: "Admission saved, but mandatory emails were not delivered to both candidate and head.",
+          error: "Admission submission failed because mandatory emails were not delivered to both candidate and head.",
           admissionId: user._id,
           mailStatus,
           mailErrors: {
